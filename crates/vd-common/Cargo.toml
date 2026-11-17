@@ -1,0 +1,16 @@
+[package]
+name = "vd-common"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — shared IDs, clock, errors, config, telemetry"
+rust-version.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,21 @@
+[package]
+name = "vd-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer end-to-end latency / throughput harness"
+rust-version.workspace = true
+
+[[bin]]
+name = "vd-bench"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+vd-netsim = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

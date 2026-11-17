@@ -1,0 +1,14 @@
+---
+description: Testing and benchmark expectations
+globs: "**/tests/**/*.rs,**/benches/**/*.rs"
+alwaysApply: false
+---
+
+# Testing
+
+- Prefer `cargo nextest run` when available; else `cargo test --workspace`
+- Proto changes need proptest roundtrip coverage
+- Network behavior: use `vd-netsim` with fixed seeds — avoid flaky sleeps
+- Benches: criterion; document command + results in performance budget table
+- Do not ignore failures; fix or mark BLOCKED with reason in HANDOFF
+- OS netem/clumsy is for E2E, not a substitute for unit tests

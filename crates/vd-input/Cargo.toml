@@ -1,0 +1,15 @@
+[package]
+name = "vd-input"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — input injection trait and platform backends"
+rust-version.workspace = true
+
+[dependencies]
+vd-common = { workspace = true }
+vd-proto = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

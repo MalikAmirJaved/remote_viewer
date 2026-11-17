@@ -1,0 +1,30 @@
+---
+description: Multi-agent claim/lock/DoD/handoff protocol
+alwaysApply: true
+---
+
+# Multi-agent protocol
+
+## Session start
+
+Read: `AGENTS.md` → `docs/STATUS.md` → last 5 `docs/HANDOFF.md` → `docs/07_TASKS.md` → `docs/agents/LOCKS.md` → ADRs + your role file.
+
+## Claim
+
+Pick TODO with deps DONE → one commit: Status=CLAIMED, Owner set, LOCKS row (24h) for `Touches`. Conflict → other task or BLOCKED.
+
+## Execute
+
+Branch `agent/<role>/<task-id>`; prefer worktree; stay inside `Touches`. Shared `Cargo.toml` / `vd-proto` = architect only.
+
+## DoD
+
+fmt + clippy `-D warnings` + tests; acceptance met; docs if needed; Status=REVIEW; release lock; append HANDOFF. Authors never mark DONE — reviewer does.
+
+## Commits
+
+Conventional Commits with task id: `feat(vd-net): … [T-0210]`
+
+## Honesty
+
+No fake DONE on stubs; no invented benches; append-only HANDOFF/ADRs.

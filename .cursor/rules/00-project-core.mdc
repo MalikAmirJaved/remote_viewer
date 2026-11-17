@@ -1,0 +1,33 @@
+---
+description: remote_viewer core mission, ethics, and repo map (always on)
+alwaysApply: true
+---
+
+# remote_viewer — project core
+
+You are working on **remote_viewer**, a clean-room low-latency remote desktop (concept like AnyDesk/RustDesk). Crate prefix `vd-*` is internal.
+
+## Goals (priority)
+
+1. Ultra-low latency (LAN p50 ≤ 40 ms glass-to-glass — initial target)
+2. Usable on weak nets (1 Mbps / 150 ms RTT / 3–5% loss)
+3. Lightweight CPU/RAM
+4. Secure by default (E2E, consent)
+5. Reliable NAT + relay
+6. Windows first
+
+## Ethics (hard)
+
+- Host always shows a visible indicator while viewed/controlled; host can end anytime
+- Unattended access = explicit opt-in only
+- No hidden mode, process masking, persistence tricks, credential harvesting
+
+## Where things live
+
+- Architecture/protocol: `docs/01_*.md`–`docs/04_*.md`
+- Tasks/status: `docs/07_TASKS.md`, `docs/STATUS.md`, `docs/HANDOFF.md`
+- ADRs: `docs/adr/`
+- Roles/locks: `docs/agents/`
+- Hot path crates: `vd-capture`, `vd-codec`, `vd-net`, `vd-rate`, apps agent/viewer
+
+Do not implement stealth RAT features. Prefer stubs returning `Error::NotImplemented` over `todo!()` in test paths.

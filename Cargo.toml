@@ -1,0 +1,105 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/vd-common",
+    "crates/vd-proto",
+    "crates/vd-crypto",
+    "crates/vd-net",
+    "crates/vd-capture",
+    "crates/vd-codec",
+    "crates/vd-rate",
+    "crates/vd-input",
+    "crates/vd-audio",
+    "crates/vd-clipboard",
+    "crates/vd-transfer",
+    "crates/vd-netsim",
+    "apps/vd-agent",
+    "apps/vd-viewer",
+    "apps/vd-signal",
+    "apps/vd-relay",
+    "tools/vd-bench",
+    "tools/xtask",
+]
+default-members = [
+    "crates/vd-common",
+    "crates/vd-proto",
+    "crates/vd-crypto",
+    "crates/vd-net",
+    "crates/vd-capture",
+    "crates/vd-codec",
+    "crates/vd-rate",
+    "crates/vd-input",
+    "crates/vd-audio",
+    "crates/vd-clipboard",
+    "crates/vd-transfer",
+    "crates/vd-netsim",
+    "apps/vd-agent",
+    "apps/vd-viewer",
+    "apps/vd-signal",
+    "apps/vd-relay",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/remote-viewer/remote_viewer"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Internal
+vd-common = { path = "crates/vd-common" }
+vd-proto = { path = "crates/vd-proto" }
+vd-crypto = { path = "crates/vd-crypto" }
+vd-net = { path = "crates/vd-net" }
+vd-capture = { path = "crates/vd-capture" }
+vd-codec = { path = "crates/vd-codec" }
+vd-rate = { path = "crates/vd-rate" }
+vd-input = { path = "crates/vd-input" }
+vd-audio = { path = "crates/vd-audio" }
+vd-clipboard = { path = "crates/vd-clipboard" }
+vd-transfer = { path = "crates/vd-transfer" }
+vd-netsim = { path = "crates/vd-netsim" }
+
+# External — pinned at workspace level
+anyhow = "1.0"
+bytes = "1.9"
+crossbeam-channel = "0.5"
+postcard = { version = "1.1", features = ["alloc"] }
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tokio = { version = "1.43", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util"] }
+axum = "0.8"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+snow = "0.9"
+argon2 = "0.5"
+blake3 = "1.5"
+zeroize = { version = "1.8", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
+proptest = "1.6"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+missing_docs = "allow"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+wildcard_imports = "allow"
+doc_markdown = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_precision_loss = "allow"
+cast_possible_wrap = "allow"
+similar_names = "allow"
+too_many_lines = "allow"
+unused_self = "allow"
+unnecessary_wraps = "allow"
+
+

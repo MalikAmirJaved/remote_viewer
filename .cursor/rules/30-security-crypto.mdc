@@ -1,0 +1,16 @@
+---
+description: Security and crypto implementation rules
+globs: "crates/vd-crypto/**/*.rs,crates/vd-proto/**/*.rs,apps/vd-signal/**/*.rs,apps/vd-relay/**/*.rs"
+alwaysApply: false
+---
+
+# Security / crypto
+
+- No custom crypto; use established crates (`snow`, `argon2`, `blake3`, `zeroize`)
+- Constant-time compares for secrets/auth proofs
+- Zeroize secret material on drop
+- Never log secrets, keys, passwords, or raw pixels
+- Validate all lengths from the wire before allocate/copy
+- Relay/signal must not decrypt session media
+- Password only via challenge-response inside E2E channel
+- Fuzz parsers when touching decode paths (P8+)

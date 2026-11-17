@@ -1,0 +1,16 @@
+---
+description: Rust style and workspace conventions
+globs: "**/*.rs"
+alwaysApply: false
+---
+
+# Rust style
+
+- Edition 2021; use workspace deps from root `Cargo.toml`
+- Libraries: `thiserror` via `vd_common::Error`; binaries may use `anyhow`
+- `#![forbid(unsafe_code)]` unless crate is `vd-capture`, `vd-codec`, or `vd-input`
+- Every `unsafe` block needs `// SAFETY:` explaining invariants
+- Prefer explicit `Result` over panics in libraries
+- No `todo!()` / `unimplemented!()` on code paths run by tests — return `Error::NotImplemented`
+- Document public traits and types with rustdoc
+- Run `cargo fmt`; clippy workspace lints must stay clean (`-D warnings` in CI)

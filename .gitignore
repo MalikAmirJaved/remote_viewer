@@ -1,0 +1,54 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+
+*.pdb
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS
+Desktop.ini
+ehthumbs.db
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+keys/
+
+# Build / packaging artifacts
+dist/
+*.msi
+*.exe
+!scripts/**
+*.AppImage
+*.deb
+*.rpm
+*.dmg
+
+# Benchmark / coverage / fuzz
+/criterion/
+/coverage/
+/fuzz/artifacts/
+/fuzz/corpus/
+perf.data*
+
+# Agent local scratch (locks live in docs/)
+.agent-scratch/
+*.orig
+*.rej
+
+# Logs
+*.log
+logs/

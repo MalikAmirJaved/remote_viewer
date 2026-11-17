@@ -1,0 +1,17 @@
+[package]
+name = "vd-crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — Noise handshake, keys, password challenge"
+rust-version.workspace = true
+
+[dependencies]
+vd-common = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+zeroize = { workspace = true }
+serde = { workspace = true }
+
+[lints]
+workspace = true

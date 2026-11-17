@@ -1,0 +1,13 @@
+---
+description: Keep STATUS, TASKS, HANDOFF, CHANGELOG accurate
+alwaysApply: true
+---
+
+# Docs and tracking
+
+- Update task Status/Owner/Updated when claiming or finishing work
+- Append HANDOFF entries (newest at bottom); never delete others' entries
+- Reviewer updates STATUS.md + CHANGELOG.md when marking DONE
+- Behavior/arch/protocol changes update the matching `docs/0*.md` and ADRs if needed
+- Protocol changes bump `PROTOCOL_VERSION` and update `docs/02_PROTOCOL.md`
+- OPEN QUESTIONS go under that heading in HANDOFF — pick reversible defaults and continue

@@ -1,0 +1,21 @@
+[package]
+name = "vd-relay"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer UDP relay — forwards opaque encrypted packets"
+rust-version.workspace = true
+
+[[bin]]
+name = "vd-relay"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,24 @@
+[package]
+name = "vd-viewer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer client — recv, decode, render, send input"
+rust-version.workspace = true
+
+[[bin]]
+name = "vd-viewer"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+vd-proto = { workspace = true }
+vd-codec = { workspace = true }
+vd-net = { workspace = true }
+vd-crypto = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

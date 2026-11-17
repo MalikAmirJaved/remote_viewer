@@ -1,0 +1,27 @@
+[package]
+name = "vd-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer host agent — capture, encode, send, receive input"
+rust-version.workspace = true
+
+[[bin]]
+name = "vd-agent"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+vd-proto = { workspace = true }
+vd-capture = { workspace = true }
+vd-codec = { workspace = true }
+vd-net = { workspace = true }
+vd-input = { workspace = true }
+vd-rate = { workspace = true }
+vd-crypto = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,17 @@
+[package]
+name = "vd-net"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — Transport trait, QUIC, hole-punch, relay, pacer"
+rust-version.workspace = true
+
+[dependencies]
+vd-common = { workspace = true }
+vd-proto = { workspace = true }
+bytes = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

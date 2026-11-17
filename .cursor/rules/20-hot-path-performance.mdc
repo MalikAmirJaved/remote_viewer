@@ -1,0 +1,15 @@
+---
+description: Hot-path performance rules for media and net crates
+globs: "crates/vd-capture/**/*.rs,crates/vd-codec/**/*.rs,crates/vd-net/**/*.rs,crates/vd-rate/**/*.rs,apps/vd-agent/**/*.rs,apps/vd-viewer/**/*.rs"
+alwaysApply: false
+---
+
+# Hot-path performance
+
+- No `.await` in capture / encode / decode / packetize loops
+- Bounded queues only; **drop-oldest / latest-frame-wins** for video
+- No heap allocation, locks, or logging above `debug` in per-frame steady state without measurement
+- Annotate stages with `tracing` spans gated by feature `perf-trace` when added
+- Input must never wait behind video
+- Measure before micro-optimizing; record numbers in `docs/05_PERFORMANCE_BUDGET.md`
+- Prefer buffer pools and `bytes::Bytes` reuse

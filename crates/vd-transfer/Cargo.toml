@@ -1,0 +1,16 @@
+[package]
+name = "vd-transfer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — chunked resumable file transfer logic"
+rust-version.workspace = true
+
+[dependencies]
+vd-common = { workspace = true }
+vd-proto = { workspace = true }
+blake3 = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

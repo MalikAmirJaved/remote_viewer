@@ -1,0 +1,13 @@
+Windows clumsy presets (manual)
+===============================
+
+Install: https://jagt.github.io/clumsy/
+
+lan:        no filtering
+wan-good:   lag 20 ms (one-way), drop 0.1%, throttle ~20 Mbps if available
+wan-weak:   lag 75 ms, drop 3%, throttle ~1 Mbps
+mobile-3g:  lag 150 ms, drop 5%, throttle ~400 kbps
+lossy-wifi: lag 30 ms, lag variance/jitter ~40 ms, drop 8%, throttle ~5 Mbps
+
+Filter inbound+outbound UDP for the agent/viewer ports under test.
+Always stop clumsy after the run.

@@ -1,0 +1,21 @@
+[package]
+name = "vd-signal"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer signaling server — IDs, auth, candidate exchange"
+rust-version.workspace = true
+
+[[bin]]
+name = "vd-signal"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+
+[lints]
+workspace = true

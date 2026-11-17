@@ -1,0 +1,14 @@
+[package]
+name = "vd-codec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — Encoder/Decoder traits and SW/HW backends"
+rust-version.workspace = true
+
+[dependencies]
+vd-common = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true
