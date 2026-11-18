@@ -8,19 +8,23 @@
 
 ### Windows
 
-- MSVC Build Tools (`windows` crate later needs them).
+- **C toolchain: MSVC Build Tools** with the C++ workload — required, not optional,
+  since [ADR-0007](adr/0007-openh264-sw-codec.md) compiles Cisco's OpenH264 C source.
+  `cl.exe` does not need to be on `PATH`; `cc` locates the MSVC install via the registry.
 - Optional: GPU vendor SDK for NVENC/AMF/QSV (**not required for P0–P1 SW path**).
 - Optional: [clumsy](https://jagt.github.io/clumsy/) for netem-like shaping.
 
 ### Linux
 
-- `build-essential`, `pkg-config`.
+- `build-essential` (**required** for the openh264 C build, see
+  [ADR-0007](adr/0007-openh264-sw-codec.md)), `pkg-config`.
 - Optional: PipeWire dev headers when implementing Linux capture.
 - `iproute2` (`tc`) for netem scripts (root/`NET_ADMIN`).
 
 ### macOS
 
-- Xcode CLT; ScreenCaptureKit when implementing macOS capture.
+- Xcode CLT (provides the C compiler openh264 needs); ScreenCaptureKit when
+  implementing macOS capture.
 
 ## FFmpeg-free by default
 

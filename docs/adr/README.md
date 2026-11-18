@@ -29,3 +29,4 @@ They are append-only: never delete or silently rewrite; supersede with a new ADR
 | [0004](0004-e2e-crypto-noise.md) | E2E crypto: Noise XX | Accepted |
 | [0005](0005-capture-encode-decode-traits.md) | Capture / encode / decode traits | Accepted |
 | [0006](0006-viewer-ui-egui.md) | Viewer UI: egui/eframe | Accepted |
+| [0007](0007-openh264-sw-codec.md) | Software H.264 codec binding: `openh264` crate | Accepted |

@@ -1,0 +1,27 @@
+[package]
+name = "vd-loopback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "remote_viewer — single-process capture→encode→decode→render pipeline (P1)"
+rust-version.workspace = true
+
+[lib]
+name = "vd_loopback"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vd-loopback"
+path = "src/main.rs"
+
+[dependencies]
+vd-common = { workspace = true }
+vd-capture = { workspace = true }
+vd-codec = { workspace = true }
+anyhow = { workspace = true }
+crossbeam-channel = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

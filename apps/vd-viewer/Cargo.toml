@@ -19,6 +19,8 @@ vd-crypto = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
+eframe = { workspace = true }
+egui = { workspace = true }
 
 [lints]
 workspace = true
