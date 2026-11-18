@@ -24,7 +24,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | TODO | unassigned | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | REVIEW | opencode-a1 | T-0006 |
-| T-0201 | Transport trait integration tests w/ netsim | P2 | CLAIMED | opencode-a1 | T-0004 |
+| T-0201 | Transport trait integration tests w/ netsim | P2 | REVIEW | opencode-a1 | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | TODO | unassigned | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
@@ -276,7 +276,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Notes / links:** docs/adr/0007-openh264-sw-codec.md, docs/12_DEV_SETUP.md
 - **Updated:** 2026-11-18 by opencode-a1
 ### T-0201 · Transport trait integration tests w/ netsim
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
 - **Owner:** opencode-a1
@@ -286,7 +286,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Acceptance:**
   - In-memory `Transport` adapter over SimLink; send/recv test
 - **Notes / links:** docs/adr/0002-transport-quic-over-udp.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0202 · Quinn connect/accept wrapper
 - **Status:** TODO

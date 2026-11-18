@@ -71,3 +71,23 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
 - Next: T-0102 wires openh264 against this source; T-0104 consumes it in `tools/loopback`.
 - Gotchas: `fps` is `u8` (max 255) — a test literal of 1000 does not compile. Pattern
   generation is a per-pixel CPU fill; fine for P1, not a steady-state path to copy.
+
+## 2026-11-18 12:12 · opencode-a1 · role: network-transport · T-0201
+- Did: `SimPair` + `SimTransport` implementing the real `Transport` trait over
+  `vd_netsim::SimLink`, in `crates/vd-net/tests/common/`; 7 integration tests in
+  `tests/sim_transport.rs`.
+- State: channel-preserving round trip (all 10 channels, in order), independent
+  directions, latency deferral (49 ms no / 50 ms yes), total-loss drop, close
+  semantics (`send` → `Error::Io`, peer unaffected), malformed/empty frame →
+  `Error::Protocol` (no panics). Workspace fmt/clippy/tests green.
+- Decisions: adapter lives in `tests/`, **not** `src/`, and `vd-netsim` is a
+  dev-dependency — a lateral feature-crate dependency in the product graph would
+  violate docs/01_ARCHITECTURE.md §3. Wire frame is `[channel_tag][payload]`;
+  `SendMode` is accepted but not modelled differently because `SimLink` has no
+  retransmission/ordering model yet. If another crate needs the adapter later,
+  promote to a gated module rather than copying it.
+- Next: T-0202 (quinn connect/accept) can start; T-0205 fragmenter is independent,
+  and T-0206's reassembler tests can reuse `tests/common`.
+- Gotchas: `SimLink` only delivers when *time advances* — tests must tick even for
+  the zero-latency `lan` profile (`advance_ms(0)`). `Channel` is `#[repr(u8)]`; the
+  tag table in `tests/common` must be updated if a channel is ever inserted.
