@@ -111,3 +111,23 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
 - Gotchas: 64x48 works; odd dimensions are rejected because I420 needs even W/H.
   Encoded output is Annex-B (4-byte start codes), not AVCC — T-0205 fragmentation and
   T-0103 decoding must assume Annex-B, or a conversion step is added later.
+
+## 2026-11-18 12:38 · opencode-a1 · role: capture-codec · T-0103
+- Did: `OpenH264Decoder` is real — lazy init on first decode, persistent reference
+  state, RGBA8 output via `DecodedYUV::write_rgba8`. Three tests: keyframe roundtrip,
+  five-frame delta sequence decoded in order, empty/garbage input handling.
+- State: measured roundtrip error on the 64x48 test pattern is **2.44/255 mean
+  absolute RGB difference** (budget 12.0), alpha fully opaque. Workspace 33 tests,
+  fmt/clippy green.
+- Decisions: output is **RGBA8, not BGRA**. Acceptance says "BGRA/YUV"; OpenH264
+  exposes only `write_rgb8`/`write_rgba8`, and the viewer's texture upload wants RGBA,
+  so BGRA would add a full per-frame swap pass with no consumer. Flagged for the
+  reviewer rather than silently reworded. Decoder is created on first `decode()` so a
+  configured-but-unused decoder allocates nothing.
+- Next: T-0104 can now build the loopback pipeline end-to-end (fake → encode → decode →
+  timings) and is unblocked.
+- Gotchas: P frames **must** be decoded in order against the same decoder instance —
+  there is no random access without an IDR. `decode()` returning `Ok(None)` from
+  OpenH264 (no frame yet) is surfaced as `Error::Unavailable`, so callers must not
+  treat every access unit as producing exactly one frame. Roundtrip error scales with
+  bitrate; the 12.0 budget is tuned for 500 kbps at 64x48.

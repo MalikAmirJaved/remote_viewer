@@ -18,7 +18,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0008 | App/tool binary stubs | P0 | DONE | cursor-init | T-0006 |
 | T-0101 | Fake frame source for loopback | P1 | REVIEW | opencode-a1 | T-0006 |
 | T-0102 | Wire openh264 SW encoder | P1 | REVIEW | opencode-a1 | T-0101 |
-| T-0103 | Wire openh264 SW decoder | P1 | CLAIMED | opencode-a1 | T-0102 |
+| T-0103 | Wire openh264 SW decoder | P1 | REVIEW | opencode-a1 | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | TODO | unassigned | T-0103 |
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
@@ -196,7 +196,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0103 · Wire openh264 SW decoder
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -205,8 +205,8 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/capture-codec/T-0103
 - **Acceptance:**
   - Decode encoder output to BGRA/YUV; roundtrip test on fake content
-- **Notes / links:** —
-- **Updated:** 2026-11-17 by cursor-init
+- **Notes / links:** output is RGBA8, not BGRA — see docs/HANDOFF.md 2026-11-18
+- **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0104 · Loopback pipeline thread + channels
 - **Status:** TODO
