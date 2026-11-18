@@ -17,7 +17,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0007 | CI workflow fmt/clippy/nextest/deny | P0 | DONE | cursor-init | T-0001 |
 | T-0008 | App/tool binary stubs | P0 | DONE | cursor-init | T-0006 |
 | T-0101 | Fake frame source for loopback | P1 | REVIEW | opencode-a1 | T-0006 |
-| T-0102 | Wire openh264 SW encoder | P1 | CLAIMED | opencode-a1 | T-0101 |
+| T-0102 | Wire openh264 SW encoder | P1 | REVIEW | opencode-a1 | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | TODO | unassigned | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | TODO | unassigned | T-0103 |
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
@@ -183,7 +183,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0102 · Wire openh264 SW encoder
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -193,7 +193,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Acceptance:**
   - Encode fake frame to Annex-B/AVCC H.264; force_idr works; low-latency flags set
 - **Notes / links:** docs/adr/0005-capture-encode-decode-traits.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0103 · Wire openh264 SW decoder
 - **Status:** TODO

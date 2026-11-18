@@ -91,3 +91,23 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
 - Gotchas: `SimLink` only delivers when *time advances* — tests must tick even for
   the zero-latency `lan` profile (`advance_ms(0)`). `Channel` is `#[repr(u8)]`; the
   tag table in `tests/common` must be updated if a channel is ever inserted.
+
+## 2026-11-18 12:31 · opencode-a1 · role: capture-codec · T-0102
+- Did: `OpenH264Encoder` is real — openh264 0.9.10 with screen-content real-time
+  usage, CBR bitrate mode, infinite GOP (on-demand IDR only), single internal thread,
+  low complexity, `skip_frames(false)`, scene-change/adaptive-quantization/background
+  detection off. BGRA→I420 into a reused `YUVBuffer`; `set_bitrate` rebuilds.
+- State: 5 tests green — Annex-B start code, first frame IDR/I, compressed output
+  (smaller than raw BGRA), P frame on the second frame, `force_idr` keyframe, rebuild
+  emits a keyframe and resets the counter, invalid args rejected. Workspace total 30
+  tests, fmt/clippy green.
+- Decisions: `skip_frames(false)` for P1 so the pipeline stays 1:1 and loopback timing
+  means something; rate-driven dropping is T-0403's job. `force_idr` maps directly to
+  `Encoder::force_intra_frame`. Bitrate changes are a slow path (encoder rebuild), so
+  T-0403 must treat them as rate-decision events, not per-frame calls. No B-frames:
+  OpenH264's real-time path does not emit them — that is a property of the encoder,
+  not something a test asserts.
+- Next: T-0103 decoder roundtrip against this output (encode→decode→compare).
+- Gotchas: 64x48 works; odd dimensions are rejected because I420 needs even W/H.
+  Encoded output is Annex-B (4-byte start codes), not AVCC — T-0205 fragmentation and
+  T-0103 decoding must assume Annex-B, or a conversion step is added later.
