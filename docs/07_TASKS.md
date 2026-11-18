@@ -16,7 +16,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0006 | Trait stubs capture/codec/net/input/crypto | P0 | DONE | cursor-init | T-0002 |
 | T-0007 | CI workflow fmt/clippy/nextest/deny | P0 | DONE | cursor-init | T-0001 |
 | T-0008 | App/tool binary stubs | P0 | DONE | cursor-init | T-0006 |
-| T-0101 | Fake frame source for loopback | P1 | TODO | unassigned | T-0006 |
+| T-0101 | Fake frame source for loopback | P1 | CLAIMED | opencode-a1 | T-0006 |
 | T-0102 | Wire openh264 SW encoder | P1 | TODO | unassigned | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | TODO | unassigned | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | TODO | unassigned | T-0103 |
@@ -170,10 +170,10 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0101 · Fake frame source for loopback
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P1
 - **Role:** capture-codec
-- **Owner:** unassigned
+- **Owner:** opencode-a1
 - **Depends on:** T-0006
 - **Touches:** crates/vd-capture/**
 - **Branch:** agent/capture-codec/T-0101
