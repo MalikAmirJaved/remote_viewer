@@ -7,7 +7,7 @@ use openh264::encoder::{
     BitRate, Complexity, Encoder as H264Encoder, EncoderConfig as H264EncoderConfig, FrameRate,
     FrameType, IntraFramePeriod, RateControlMode, UsageType,
 };
-use openh264::formats::{BgraSliceU8, YUVBuffer};
+use openh264::formats::{BgraSliceU8, YUVBuffer, YUVSource};
 use openh264::{OpenH264API, Timestamp};
 use vd_common::{Error, Result};
 
@@ -97,7 +97,7 @@ pub struct DecodedFrame {
     pub width: u32,
     /// Height.
     pub height: u32,
-    /// BGRA (stub path) or GPU handle later.
+    /// Packed RGBA8 in the SW path (T-0103); a GPU handle replaces this in the HW path (T-0502).
     pub data: Vec<u8>,
 }
 
@@ -305,13 +305,83 @@ impl Encoder for OpenH264Encoder {
     }
 }
 
-/// Software H.264 decoder stub.
-#[derive(Debug, Default)]
-pub struct OpenH264Decoder;
+/// Software H.264 decoder backed by Cisco OpenH264 (see ADR-0007).
+///
+/// Input is Annex-B NAL units (what [`OpenH264Encoder`] emits). Output is packed
+/// **RGBA8**, which is what the viewer UI wants for texture upload and what OpenH264
+/// produces directly — no extra channel-swap pass. The decoder keeps reference frames
+/// internally, so sequential P frames must be decoded in order.
+pub struct OpenH264Decoder {
+    inner: Option<openh264::decoder::Decoder>,
+    decoded_frames: u64,
+}
+
+impl std::fmt::Debug for OpenH264Decoder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("OpenH264Decoder")
+            .field("initialized", &self.inner.is_some())
+            .field("decoded_frames", &self.decoded_frames)
+            .finish()
+    }
+}
+
+impl Default for OpenH264Decoder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl OpenH264Decoder {
+    /// Create an uninitialized decoder; OpenH264 state is created on first decode.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            inner: None,
+            decoded_frames: 0,
+        }
+    }
+
+    /// Number of frames produced since construction.
+    #[must_use]
+    pub fn decoded_frames(&self) -> u64 {
+        self.decoded_frames
+    }
+}
 
 impl Decoder for OpenH264Decoder {
-    fn decode(&mut self, _data: &[u8], _is_keyframe: bool) -> Result<DecodedFrame> {
-        Err(Error::NotImplemented("openh264 Decoder::decode"))
+    fn decode(&mut self, data: &[u8], _is_keyframe: bool) -> Result<DecodedFrame> {
+        if data.is_empty() {
+            return Err(Error::InvalidArgument("decoder: empty bitstream".into()));
+        }
+
+        if self.inner.is_none() {
+            self.inner = Some(
+                openh264::decoder::Decoder::new()
+                    .map_err(|e| Error::Other(format!("openh264 decoder init failed: {e}")))?,
+            );
+        }
+        let decoder = self.inner.as_mut().expect("decoder was just initialized");
+
+        let yuv = decoder
+            .decode(data)
+            .map_err(|e| Error::Other(format!("openh264 decode failed: {e}")))?
+            .ok_or_else(|| {
+                Error::Unavailable("decoder produced no frame for this access unit".into())
+            })?;
+
+        let (width, height) = yuv.dimensions();
+        if width == 0 || height == 0 {
+            return Err(Error::Unavailable("decoder produced an empty frame".into()));
+        }
+        let mut rgba = vec![0u8; width * height * 4];
+        yuv.write_rgba8(&mut rgba);
+
+        self.decoded_frames += 1;
+        Ok(DecodedFrame {
+            width: width as u32,
+            height: height as u32,
+            data: rgba,
+        })
     }
 }
 
@@ -452,6 +522,83 @@ mod tests {
         enc.configure(&cfg()).expect("configure");
         let err = enc.set_bitrate(0).unwrap_err();
         assert!(matches!(err, Error::InvalidArgument(_)));
+    }
+
+    /// Mean absolute RGB difference between a source BGRA frame and a decoded RGBA frame.
+    fn mean_abs_diff(src_bgra: &[u8], decoded_rgba: &[u8]) -> f64 {
+        assert_eq!(src_bgra.len(), decoded_rgba.len(), "size mismatch");
+        let pixels = src_bgra.len() / 4;
+        let mut sum = 0u64;
+        for i in 0..pixels {
+            let s = &src_bgra[i * 4..i * 4 + 3];
+            let d = &decoded_rgba[i * 4..i * 4 + 3];
+            // Source is BGRA, decoded is RGBA: compare R,G,B in the same order.
+            sum += u64::from(s[2].abs_diff(d[0]));
+            sum += u64::from(s[1].abs_diff(d[1]));
+            sum += u64::from(s[0].abs_diff(d[2]));
+        }
+        sum as f64 / (pixels as f64 * 3.0)
+    }
+
+    #[test]
+    fn keyframe_roundtrips_through_decoder() {
+        let mut enc = OpenH264Encoder::new();
+        enc.configure(&cfg()).expect("configure");
+        let source = frame(0);
+        let encoded = enc.encode(&source, 0, false).expect("encode");
+
+        let mut dec = OpenH264Decoder::new();
+        let decoded = dec
+            .decode(&encoded.data, encoded.is_keyframe)
+            .expect("decode");
+        assert_eq!((decoded.width, decoded.height), (64, 48));
+        assert_eq!(decoded.data.len(), 64 * 48 * 4);
+
+        let diff = mean_abs_diff(&source, &decoded.data);
+        println!("keyframe mean abs diff: {diff:.2}");
+        assert!(
+            diff < 12.0,
+            "decoded keyframe deviates too far from source: {diff:.2}"
+        );
+        assert!(
+            decoded.data.chunks_exact(4).all(|p| p[3] == 255),
+            "decoded alpha must be opaque"
+        );
+        assert_eq!(dec.decoded_frames(), 1);
+    }
+
+    #[test]
+    fn delta_sequence_roundtrips_in_order() {
+        let mut enc = OpenH264Encoder::new();
+        enc.configure(&cfg()).expect("configure");
+        let mut dec = OpenH264Decoder::new();
+
+        for i in 0..5u32 {
+            let source = frame(i);
+            let encoded = enc
+                .encode(&source, u64::from(i) * 33_000, i == 0)
+                .expect("encode");
+            let decoded = dec
+                .decode(&encoded.data, encoded.is_keyframe)
+                .expect("decode");
+            assert_eq!((decoded.width, decoded.height), (64, 48), "frame {i}");
+            let diff = mean_abs_diff(&source, &decoded.data);
+            assert!(diff < 12.0, "frame {i} diff {diff:.2}");
+        }
+        assert_eq!(dec.decoded_frames(), 5);
+        assert_eq!(enc.frames_encoded(), 5);
+    }
+
+    #[test]
+    fn decoder_rejects_empty_and_garbage_input() {
+        let mut dec = OpenH264Decoder::new();
+        let err = dec.decode(&[], true).unwrap_err();
+        assert!(matches!(err, Error::InvalidArgument(_)));
+
+        // Neither a panic nor a silent success.
+        let garbage = [0u8, 0, 0, 1, 0x09, 0x09, 0x09, 0x09];
+        assert!(dec.decode(&garbage, true).is_err());
+        assert_eq!(dec.decoded_frames(), 0);
     }
 }
 
