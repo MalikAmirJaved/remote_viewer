@@ -248,17 +248,17 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0107 · DXGI capturer MVP (Windows)
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P1
 - **Role:** capture-codec
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0006
 - **Touches:** crates/vd-capture/**
 - **Branch:** agent/capture-codec/T-0107
 - **Acceptance:**
   - Capture primary monitor; handle access-lost reinit; cfg-gated so Linux still builds
 - **Notes / links:** docs/agents/role-capture-codec.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-18 by opencode-a2
 
 ### T-0108 · P1 dependency unblock + ADR-0007
 - **Status:** REVIEW
