@@ -2,7 +2,11 @@
 //!
 //! Unsafe is allowed in platform backends; each `unsafe` block needs `// SAFETY:`.
 
+pub mod fake;
+
 use vd_common::{Error, Result};
+
+pub use fake::{render_test_pattern, FakeCaptureConfig, FakeCapturer};
 
 /// Pixel format of a captured frame.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
