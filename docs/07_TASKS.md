@@ -23,6 +23,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | TODO | unassigned | T-0006 |
+| T-0108 | P1 dependency unblock + ADR-0007 | P1 | CLAIMED | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | TODO | unassigned | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | TODO | unassigned | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
@@ -258,6 +259,22 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
   - Capture primary monitor; handle access-lost reinit; cfg-gated so Linux still builds
 - **Notes / links:** docs/agents/role-capture-codec.md
 - **Updated:** 2026-11-17 by cursor-init
+
+### T-0108 · P1 dependency unblock + ADR-0007
+- **Status:** CLAIMED
+- **Phase:** P1
+- **Role:** architect
+- **Owner:** opencode-a1
+- **Depends on:** T-0006
+- **Touches:** Cargo.toml, crates/vd-codec/Cargo.toml, crates/vd-capture/Cargo.toml, apps/vd-viewer/Cargo.toml, tools/loopback/**, docs/adr/**, docs/07_TASKS.md, docs/agents/LOCKS.md, docs/12_DEV_SETUP.md
+- **Branch:** agent/architect/T-0108
+- **Acceptance:**
+  - `openh264`, `eframe`/`egui`, `windows` pinned in `[workspace.dependencies]` and wired into the owning crates so the dependency graph (incl. the openh264 C build) actually compiles
+  - ADR-0007 records the openh264 binding/licensing decision and the C-toolchain prerequisite
+  - `tools/loopback` workspace member stub added (T-0104 placement decided)
+  - `fmt` / `clippy -D warnings` / `test` green on Windows
+- **Notes / links:** docs/adr/0007-openh264-sw-codec.md, docs/12_DEV_SETUP.md
+- **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0201 · Transport trait integration tests w/ netsim
 - **Status:** TODO
