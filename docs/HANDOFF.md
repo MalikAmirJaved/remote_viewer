@@ -34,3 +34,24 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   T-0402 can wait until P4 but T-0005 skeleton is ready; T-0305 Noise when nearing P3;
   prefer T-0101 + T-0107 + T-0201 + T-0205 first.
 - Gotchas: Do not add `todo!()` on tested paths. Hot paths must stay sync. Ethics rules are hard.
+
+## 2026-11-18 11:56 · opencode-a1 · role: architect · T-0108
+- Did: Added `openh264` 0.9.10, `eframe`/`egui` 0.37, `windows` 0.62 to
+  `[workspace.dependencies]` and wired them into `vd-codec` / `vd-viewer` /
+  `vd-capture` (cfg(windows)) so the graph really compiles. Added `tools/loopback`
+  member stub (lib + bin) as the T-0104 host. Wrote ADR-0007.
+- State: `cargo check --workspace --all-targets` green **including the openh264 C
+  build** (`openh264_encoder.lib`/`openh264_common.lib` produced by `cc` with MSVC
+  14.44). fmt / clippy `-D warnings` / `cargo test --workspace` green (13 tests).
+  `vd-loopback` runs and honestly prints NotImplemented for the pipeline.
+- Decisions: ADR-0007 — `openh264` crate with default `source` feature (vendored BSD
+  C source, no runtime download, no opaque blob) over `shiguredo_openh264`. A C
+  toolchain is now a hard prerequisite (MSVC Build Tools / build-essential); recorded
+  in `docs/12_DEV_SETUP.md`. eframe uses `default-features = false` +
+  `["default_fonts", "glow"]` — `wgpu` stays the P5/zero-copy choice (T-0502), not MVP.
+  T-0104 placement settled: `tools/loopback`, not the product apps (that is T-0208).
+- Next: T-0101 (fake capturer) and T-0201 (in-memory Transport over SimLink) can run
+  in parallel; then T-0102 encode → T-0103 decode → T-0104 pipeline → T-0105/T-0106.
+- Gotchas: `cargo nextest` is not installed on this machine; `cargo test --workspace`
+  is the DoD fallback. Adding eframe makes first builds multi-minute on a cold cache.
+  openh264 quality on low-latency settings is still unmeasured (T-0102).
