@@ -19,7 +19,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0101 | Fake frame source for loopback | P1 | REVIEW | opencode-a1 | T-0006 |
 | T-0102 | Wire openh264 SW encoder | P1 | REVIEW | opencode-a1 | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | REVIEW | opencode-a1 | T-0102 |
-| T-0104 | Loopback pipeline thread + channels | P1 | TODO | unassigned | T-0103 |
+| T-0104 | Loopback pipeline thread + channels | P1 | CLAIMED | opencode-a1 | T-0103 |
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | TODO | unassigned | T-0006 |
@@ -209,10 +209,10 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0104 · Loopback pipeline thread + channels
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P1
 - **Role:** architect
-- **Owner:** unassigned
+- **Owner:** opencode-a1
 - **Depends on:** T-0103
 - **Touches:** apps/vd-agent/**, apps/vd-viewer/** OR new tools/loopback
 - **Branch:** agent/architect/T-0104
