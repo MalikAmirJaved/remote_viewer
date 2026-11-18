@@ -131,3 +131,31 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   OpenH264 (no frame yet) is surfaced as `Error::Unavailable`, so callers must not
   treat every access unit as producing exactly one frame. Roundtrip error scales with
   bitrate; the 12.0 budget is tuned for 500 kbps at 64x48.
+
+## 2026-11-18 12:44 · opencode-a1 · role: architect · T-0104
+- Did: `tools/loopback/src/lib.rs` now runs four dedicated OS threads (capture, encode,
+  decode, present) joined by bounded `crossbeam-channel` queues (`queue_cap` 1–2).
+  `LatestSender::send_latest` evicts the oldest queued item instead of blocking, so
+  capture cadence never depends on encode. `RunStats` reports per-stage timing sums,
+  mean/max frame total and per-queue drop counters. CLI gained `--frames` and
+  `--queue-cap` and prints the summary.
+- State: **measured on this machine**, 320x180, 30 frames at 30 fps:
+  `captured=30 encoded=30 decoded=30 presented=30 dropped=0`, capture 110 ms total,
+  encode 273 ms, decode 122 ms, mean frame total 16.8 ms, max 33.2 ms. Workspace 37
+  tests, fmt/clippy green. 12-frame unit run at 64x48 has zero drops and last index 11.
+- Decisions: all three in-process queues share one `queue_cap` because the pacer/network
+  stage is bypassed here; production wiring keeps the architecture's per-link caps.
+  `LatestReceiver`'s `Drop` sets a flag the sender checks — without it the sender's own
+  receiver clone keeps the channel "connected", so a dead consumer would spin the
+  producer forever. "Present" is a dimension-validated stand-in until T-0105, so its
+  measured cost (~0) is **not** representative of texture upload.
+- Open items (honest): OpenH264 logs two advisory warnings at init —
+  `bEnableFrameSkip = 0` means the CBR bitrate is advisory rather than enforced, and
+  screen-change detection is off (deliberate, keeps keyframes on-demand). Rate
+  enforcement belongs to T-0403; do not claim bitrate accuracy until it exists.
+- Next: T-0105 can present `DecodedFrame` (RGBA8) in egui; T-0106 can consume `RunStats`
+  for the latency report. T-0107 swaps `FakeCapturer` for DXGI without touching stages.
+- Gotchas: capture polls at 1 ms while `capture_frame` returns `Ok(None)` — harness-only,
+  production DXGI blocks. Entry indexing is 0-based and `force_idr` fires only on index 0,
+  so a decoder joining mid-stream needs an explicit IDR. Per-stage totals only cover
+  **presented** frames; dropped frames contribute no timing.
