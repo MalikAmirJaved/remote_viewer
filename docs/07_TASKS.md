@@ -16,7 +16,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0006 | Trait stubs capture/codec/net/input/crypto | P0 | DONE | cursor-init | T-0002 |
 | T-0007 | CI workflow fmt/clippy/nextest/deny | P0 | DONE | cursor-init | T-0001 |
 | T-0008 | App/tool binary stubs | P0 | DONE | cursor-init | T-0006 |
-| T-0101 | Fake frame source for loopback | P1 | CLAIMED | opencode-a1 | T-0006 |
+| T-0101 | Fake frame source for loopback | P1 | REVIEW | opencode-a1 | T-0006 |
 | T-0102 | Wire openh264 SW encoder | P1 | TODO | unassigned | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | TODO | unassigned | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | TODO | unassigned | T-0103 |
@@ -170,7 +170,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0101 · Fake frame source for loopback
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -180,7 +180,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Acceptance:**
   - `Capturer` impl yields patterned BGRA frames at configurable fps; unit test
 - **Notes / links:** docs/06_ROADMAP.md#p1--local-pipeline
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-18 by opencode-a1
 
 ### T-0102 · Wire openh264 SW encoder
 - **Status:** TODO

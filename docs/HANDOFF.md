@@ -55,3 +55,19 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
 - Gotchas: `cargo nextest` is not installed on this machine; `cargo test --workspace`
   is the DoD fallback. Adding eframe makes first builds multi-minute on a cold cache.
   openh264 quality on low-latency settings is still unmeasured (T-0102).
+
+## 2026-11-18 12:04 · opencode-a1 · role: capture-codec · T-0101
+- Did: `crates/vd-capture/src/fake.rs` — `FakeCapturer` + `FakeCaptureConfig` +
+  `render_test_pattern`. Animated BGRA pattern (blue ramp, green ramp, moving red bar,
+  low byte of `frame_index` in the top row's alpha) so later stages can prove frame
+  identity end-to-end.
+- State: 5 unit tests green (config validation, fps→interval, layout, animation/index
+  encoding, pacing+dirty-skip). `capture_frame` returns `Ok(None)` before the next
+  frame is due instead of blocking — exercises the loopback dirty-skip path.
+  Workspace fmt/clippy/tests green.
+- Decisions: available in **normal** builds, not `cfg(test)` only — `tools/loopback`
+  and `vd-bench` need it. Pacing tests use a `#[cfg(test)]` manual clock setter, so no
+  sleeps and no flaky timing assertions.
+- Next: T-0102 wires openh264 against this source; T-0104 consumes it in `tools/loopback`.
+- Gotchas: `fps` is `u8` (max 255) — a test literal of 1000 does not compile. Pattern
+  generation is a per-pixel CPU fill; fine for P1, not a steady-state path to copy.
