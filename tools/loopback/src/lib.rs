@@ -506,7 +506,7 @@ mod tests {
 
     fn small_config() -> PipelineConfig {
         PipelineConfig {
-            fps: 60,
+            fps: 30,
             width: 64,
             height: 48,
             bitrate_bps: 500_000,
