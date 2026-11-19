@@ -159,3 +159,41 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   production DXGI blocks. Entry indexing is 0-based and `force_idr` fires only on index 0,
   so a decoder joining mid-stream needs an explicit IDR. Per-stage totals only cover
   **presented** frames; dropped frames contribute no timing.
+
+## 2026-11-19 09:07 · opencode-a2 · role: capture-codec · T-0107
+- Did: `crates/vd-capture/src/dxgi.rs` — real DXGI Desktop Duplication capturer: D3D11
+  device with BGRA support, monitor selection on the device's adapter, non-blocking
+  `AcquireNextFrame(0)`, staging-texture readback into tightly packed BGRA8, dirty rects
+  from frame metadata, and `DXGI_ERROR_ACCESS_LOST` recovery that rebuilds the
+  duplication + staging texture and raises a keyframe hint. Added the crate-local
+  `windows` features (`Win32_Graphics_Direct3D`, `..._Direct3D11`) and a default
+  `Capturer::take_needs_keyframe()` trait method. Replaced the Windows stub with a
+  re-export; Linux/macOS stubs untouched.
+- State: measured on this machine, 1680x1050, **debug** build, 60 frames with a moving
+  window: capture mean 3225 us, p50 3121 us, max 4523 us (budget ≤4 ms; p50 inside, max
+  over in an unoptimised build). Verified by the ignored test
+  `vd_capture::dxgi::tests::dxgi_captures_primary_output_and_recovers` — start, frame
+  acquisition, BGRA size/format, dirty-rect bounds, rebuild path, clean stop. Workspace
+  fmt / clippy `-D warnings` / `cargo test --workspace` green (41 passed, 1 ignored).
+- Decisions: keyframe signalling is a default trait method (`take_needs_keyframe`)
+  instead of a field on `CapturedFrame`, so the trait stays the contract and fake/stub
+  backends need no change. Dirty rects are best-effort: an empty vector means
+  "whole frame", so metadata failure degrades to a full encode. Rotated outputs are
+  rejected with `Unavailable` (T-0605) rather than emitting a sideways frame.
+  `capture_ts_us` is the CPU-copy time, not the DXGI desktop present time.
+- Honest gaps: real `ACCESS_LOST` was **not** triggered (needs desktop lock, switch or
+  resolution change); only the rebuild routine it calls is exercised live. Hardware
+  cursor is not captured (T-0409), secondary-adapter outputs are not enumerated
+  (T-0605), and every delivered frame allocates one `Vec<u8>` because `CapturedFrame`
+  has no buffer-return path — this violates the "no per-frame alloc" goal until the P5
+  pool/GPU path. Only the Windows target was compiled here.
+- Next: P1 close-out — T-0105 (egui presents `DecodedFrame`) and T-0106 (per-stage
+  report). Swapping `FakeCapturer` for `DxgiCapturer` in `tools/loopback` needs its own
+  task because that path belongs to T-0104; T-0405 must consume
+  `take_needs_keyframe` when it drives the encoder.
+- Gotchas: the capturer is thread-affine (COM apartment, D3D11 immediate context,
+  duplication object) — create/capture/drop on one OS thread. `WAIT_TIMEOUT` on a
+  static desktop is normal, not an error (correcting the T-0104 note above: the DXGI
+  backend polls with a zero timeout instead of blocking). Every successful acquire must
+  release the frame exactly once, including when the metadata says pointer-only.
+

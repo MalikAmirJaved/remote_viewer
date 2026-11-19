@@ -22,7 +22,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0104 | Loopback pipeline thread + channels | P1 | REVIEW | opencode-a1 | T-0103 |
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
-| T-0107 | DXGI capturer MVP (Windows) | P1 | TODO | unassigned | T-0006 |
+| T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | REVIEW | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | REVIEW | opencode-a1 | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | TODO | unassigned | T-0201 |
@@ -248,7 +248,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0107 · DXGI capturer MVP (Windows)
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a2
@@ -257,8 +257,8 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/capture-codec/T-0107
 - **Acceptance:**
   - Capture primary monitor; handle access-lost reinit; cfg-gated so Linux still builds
-- **Notes / links:** docs/agents/role-capture-codec.md
-- **Updated:** 2026-11-18 by opencode-a2
+- **Notes / links:** docs/agents/role-capture-codec.md, docs/HANDOFF.md 2026-11-19
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0108 · P1 dependency unblock + ADR-0007
 - **Status:** REVIEW

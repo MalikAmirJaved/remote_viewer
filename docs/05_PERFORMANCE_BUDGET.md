@@ -56,6 +56,12 @@ Presets: [`scripts/netem/`](../scripts/netem) · in-process: `vd-netsim`.
 |------|---------|--------|--------|--------|-----|-------------|-------|
 | — | — | — | — | — | — | — | **not measured yet** |
 
+### Stage measurements (host-side, not glass-to-glass)
+
+| Date | Stage | Context | N | p50 | max | Notes |
+|------|-------|---------|---|-----|-----|-------|
+| 2026-11-19 | Capture — DXGI Desktop Duplication, 1680×1050 BGRA8 | dev box, `dev` (debug) build, moving window as activity | 60 | 3.1 ms | 4.5 ms | `capture_frame` incl. staging copy + tight BGRA buffer. p50 inside the ≤ 4 ms capture budget; max over it in a debug build. Not comparable to release/GPU paths. |
+
 ## Related
 
 [03_NETWORK_ADAPTATION.md](03_NETWORK_ADAPTATION.md) · [09_TESTING_STRATEGY.md](09_TESTING_STRATEGY.md) · tools/`vd-bench`
