@@ -8,6 +8,7 @@ use vd_common::{Error, Result};
 use vd_proto::Channel;
 
 pub mod quic;
+pub mod video;
 
 /// Destination / path selection hint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

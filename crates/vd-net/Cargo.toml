@@ -22,6 +22,9 @@ rcgen = { version = "0.13", default-features = false, features = ["ring"] }
 vd-netsim = { workspace = true }
 # Only tests and examples drive the endpoints; the library itself owns no runtime.
 tokio = { workspace = true }
+# The fragmenter consumes a borrowed view; this dev-dep proves it against the real codec
+# type without adding a feature→feature edge to the product graph.
+vd-codec = { workspace = true }
 
 [lints]
 workspace = true
