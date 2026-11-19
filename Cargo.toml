@@ -68,6 +68,7 @@ bytes = "1.9"
 crossbeam-channel = "0.5"
 postcard = { version = "1.1", features = ["alloc"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
 thiserror = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

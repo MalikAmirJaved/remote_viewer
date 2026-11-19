@@ -34,7 +34,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
 | T-0209 | SendInput keyboard/mouse MVP | P2 | REVIEW | opencode-a2 | T-0006 |
 | T-0210 | InputMove coalesce ≤125 Hz | P2 | REVIEW | opencode-a2 | T-0204,T-0209 |
-| T-0301 | Signal: register peer ID (SQLite) | P3 | TODO | unassigned | T-0008 |
+| T-0301 | Signal: register peer ID (SQLite) | P3 | REVIEW | opencode-a2 | T-0008 |
 | T-0302 | Signal: session notify + candidates WS | P3 | TODO | unassigned | T-0301 |
 | T-0303 | Hole punch from shared UDP socket | P3 | TODO | unassigned | T-0202 |
 | T-0304 | Relay forward opaque packets | P3 | TODO | unassigned | T-0302 |

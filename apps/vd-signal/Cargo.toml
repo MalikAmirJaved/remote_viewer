@@ -16,6 +16,10 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
 tokio = { workspace = true }
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+axum = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 [lints]
 workspace = true
