@@ -425,7 +425,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
   are rejected with `InvalidArgument`: empty payload, zero or >`u16` dimension, empty
   codec id, zero fragment cap, and >`u16::MAX` fragments.
 - **Deviation (documented, not silently reworded):** the production signature takes
-  [`EncodedFrameRef`] — a borrowed, field-for-field view of `vd_codec::EncodedFrame` —
+  `EncodedFrameRef` — a borrowed, field-for-field view of `vd_codec::EncodedFrame` —
   instead of the codec type itself. Architecture §3 only allows downward dependencies
   (`feature → vd-proto/vd-common`), so linking `vd-codec` from `vd-net` would be a
   feature→feature edge needing an architect/ADR decision. `vd-codec` is therefore a
