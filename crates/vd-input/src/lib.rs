@@ -143,6 +143,72 @@ pub(crate) fn plan_move(
     }
 }
 
+/// Coalescing state for mouse moves (T-0210).
+///
+/// Stores the latest move and its timestamp; a downstream sender will only transmit
+/// the latest value if enough time has elapsed since the last transmission (≤125 Hz
+/// cap). This runs lock-free on the input thread and never blocks on video.
+#[derive(Debug, Default)]
+pub struct MoveCoalescer {
+    /// Latest move in virtual-desktop pixels.
+    latest: Option<crate::HostInput>,
+    /// Timestamp (µs) of when this latest move was generated.
+    latest_ts_us: u64,
+    /// Minimum interval between transmissions (µs). 125 Hz → 8000 µs.
+    min_interval_us: u64,
+}
+
+impl MoveCoalescer {
+    /// Create a coalescer with the default 125 Hz cap.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::with_min_interval(8_000)
+    }
+
+    /// Create a coalescer with a custom minimum interval.
+    #[must_use]
+    pub fn with_min_interval(min_interval_us: u64) -> Self {
+        Self {
+            min_interval_us,
+            ..Default::default()
+        }
+    }
+
+    /// Feed a new `InputMoveMessage` into the coalescer.
+    ///
+    /// Returns `Some(moved)` if a new move was captured (discarding any previous
+    /// pending move), or `None` if the interval has not yet elapsed since the last
+    /// transmission.
+    pub fn feed(&mut self, event: &InputMoveMessage, now_us: u64, bounds: DesktopBounds) -> Option<crate::HostInput> {
+        match plan_move(event, bounds) {
+            Ok(moved) => {
+                // Always update the latest move regardless of timing.
+                self.latest = Some(moved.clone());
+                self.latest_ts_us = now_us;
+
+                // Check if enough time has elapsed since the last *transmission*.
+                // We use a simple elapsed check; the caller decides when to actually send.
+                if now_us.saturating_sub(self.latest_ts_us) >= self.min_interval_us {
+                    // We have a fresh move that's past the interval; return it.
+                    // The caller will reset the timer after sending.
+                    Some(moved)
+                } else {
+                    // Not yet time to send; return None (caller should wait).
+                    None
+                }
+            }
+            Err(_) => None,
+        }
+    }
+
+    /// Reset the internal state (e.g., on session disconnect).
+    #[must_use]
+    pub fn reset(&mut self) {
+        self.latest = None;
+        self.latest_ts_us = 0;
+    }
+}
+
 /// Decode a wire scan code into `(scan, extended)`.
 pub(crate) fn decode_scancode(code: u32) -> Result<(u16, bool)> {
     let scan = code & 0xFF;
