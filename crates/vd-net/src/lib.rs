@@ -7,6 +7,8 @@ use bytes::Bytes;
 use vd_common::{Error, Result};
 use vd_proto::Channel;
 
+pub mod quic;
+
 /// Destination / path selection hint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SendMode {

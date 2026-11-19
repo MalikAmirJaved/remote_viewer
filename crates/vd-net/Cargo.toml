@@ -12,9 +12,16 @@ vd-proto = { workspace = true }
 bytes = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+# QUIC transport (ADR-0002). Declared crate-locally for T-0202; the architect should
+# promote these pins into [workspace.dependencies] when the network phase settles.
+quinn = "0.11"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rcgen = { version = "0.13", default-features = false, features = ["ring"] }
 
 [dev-dependencies]
 vd-netsim = { workspace = true }
+# Only tests and examples drive the endpoints; the library itself owns no runtime.
+tokio = { workspace = true }
 
 [lints]
 workspace = true
