@@ -20,7 +20,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0102 | Wire openh264 SW encoder | P1 | DONE | opencode-a1 | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | DONE | opencode-a1 | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | DONE | opencode-a1 | T-0103 |
-| T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
+| T-0105 | egui present decoded texture | P1 | CLAIMED | opencode-a2 | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
@@ -238,17 +238,17 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0105 · egui present decoded texture
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P1
 - **Role:** viewer-ui
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0104
 - **Touches:** apps/vd-viewer/**
 - **Branch:** agent/viewer-ui/T-0105
 - **Acceptance:**
   - Window shows loopback frames via egui/wgpu; close cleanly
 - **Notes / links:** docs/adr/0006-viewer-ui-egui.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0106 · Per-stage latency spans + report
 - **Status:** TODO
