@@ -21,7 +21,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0103 | Wire openh264 SW decoder | P1 | DONE | opencode-a1 | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | DONE | opencode-a1 | T-0103 |
 | T-0105 | egui present decoded texture | P1 | REVIEW | opencode-a2 | T-0104 |
-| T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
+| T-0106 | Per-stage latency spans + report | P1 | CLAIMED | opencode-a2 | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
@@ -267,17 +267,20 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0106 · Per-stage latency spans + report
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P1
 - **Role:** qa-bench
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0104
-- **Touches:** tools/vd-bench/**, docs/05_PERFORMANCE_BUDGET.md
+- **Touches:** tools/vd-bench/**, tools/loopback/**, docs/05_PERFORMANCE_BUDGET.md
 - **Branch:** agent/qa-bench/T-0106
 - **Acceptance:**
   - p50 per stage printed; results row added (or HANDOFF if env blocked)
 - **Notes / links:** docs/05_PERFORMANCE_BUDGET.md
-- **Updated:** 2026-11-17 by cursor-init
+  **Touches amended** on claim: `RunStats` only kept per-stage sums and one max, so p50
+  cannot be computed downstream. Percentiles need per-frame samples, which only the
+  loopback records — `tools/loopback/**` added (T-0104 is DONE and its lock released).
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0107 · DXGI capturer MVP (Windows)
 - **Status:** REVIEW
