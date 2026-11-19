@@ -250,4 +250,31 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   tested. Launching the window from a headless/RDP-disconnected session will not render
   (needs a desktop), same constraint as the ignored DXGI test.
 
+## 2026-11-19 04:44 · opencode-a2 · role: qa-bench · T-0106
+- Did: made the per-stage latency report real. `RunStats` gained `samples: Vec<StageTimings>`
+  (one per presented frame) because sums cannot produce a p50; `tools/vd-bench` now runs
+  `vd_loopback::run` end to end and prints nearest-rank p50/p95/p99/max/mean for capture,
+  encode, decode, present and total, with frame/drop counters. Replaced the old netsim
+  "probe" stub (it printed a hard-coded `lan` latency and measured nothing) and dropped
+  its `vd-netsim` dependency. 4 new tests; perf doc has a reproduction block plus the
+  three measured rows.
+- State: **measured this machine, `--release`, software H.264** — 720p30: total p50
+  24.75 ms / p95 27.83 ms, 0 dropped of 300; 720p60: p50 25.31 ms / p95 30.18 ms,
+  8 dropped; 1080p30: p50 55.61 ms / p95 61.47 ms, 26 dropped. All drops are
+  capture→encode (latest-frame-wins), never downstream. fmt / clippy `-D warnings` /
+  `cargo test --workspace` green (53 passed, 1 ignored).
+- Decisions: amended T-0106's `Touches` to include `tools/loopback/**` and said so on the
+  task, because percentiles require the per-frame samples that only the loopback records;
+  T-0104 was already DONE with its lock released, so nothing was taken from an active
+  agent. Percentiles are nearest-rank on purpose: a budget should be compared to a value
+  that actually occurred, not an interpolated one.
+- Next: P1 implementation is now complete (5 DONE + T-0105/T-0106/T-0107 in REVIEW).
+  Needs three independent reviews; then P2 (T-0202 quinn) is the next claimable task.
+- Gotchas: `present` p50 is 0.00 ms by construction (dimension check until the viewer's
+  texture path is measured here) — do not read it as a free render. Capture numbers come
+  from `FakeCapturer` (pattern generation), so they are not comparable to the DXGI rows.
+  Percentiles exclude dropped frames entirely: they describe presented frames only.
+  Software encode cannot hold 720p60 or 1080p30 on this CPU; that is the P5 HW-encode
+  trigger, not a queue-policy bug.
+
 

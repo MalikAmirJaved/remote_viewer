@@ -21,7 +21,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0103 | Wire openh264 SW decoder | P1 | DONE | opencode-a1 | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | DONE | opencode-a1 | T-0103 |
 | T-0105 | egui present decoded texture | P1 | REVIEW | opencode-a2 | T-0104 |
-| T-0106 | Per-stage latency spans + report | P1 | CLAIMED | opencode-a2 | T-0104 |
+| T-0106 | Per-stage latency spans + report | P1 | REVIEW | opencode-a2 | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
@@ -267,7 +267,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0106 · Per-stage latency spans + report
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** qa-bench
 - **Owner:** opencode-a2
@@ -280,6 +280,20 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
   **Touches amended** on claim: `RunStats` only kept per-stage sums and one max, so p50
   cannot be computed downstream. Percentiles need per-frame samples, which only the
   loopback records — `tools/loopback/**` added (T-0104 is DONE and its lock released).
+- **Implementation:** `RunStats.samples` now carries one `StageTimings` per presented
+  frame (32 B/frame, bounded by `--frames`). `tools/vd-bench` runs `vd_loopback::run`
+  and prints n / p50 / p95 / p99 / max / mean for capture, encode, decode, present and
+  total, plus frame/drop counters. Percentiles are nearest-rank (no interpolation).
+  4 new tests: known-series percentiles, empty/single sample, unsorted input, and a real
+  64x48 pipeline run that reports every stage. The old netsim "stub" probe was removed
+  — it printed a hard-coded `lan` latency and measured nothing.
+- **Measured this machine, `--release`, software H.264 (see perf doc for full table):**
+  720p30 → total p50 24.75 ms, p95 27.83 ms, 0 dropped of 300; 720p60 → total p50
+  25.31 ms, 8 dropped; 1080p30 → total p50 55.61 ms, 26 dropped. Capture numbers come
+  from `FakeCapturer`, so they are not comparable to the DXGI 3.4 ms row.
+- **Known limits:** host-side only — not glass-to-glass (no network/viewer/camera);
+  `present` is still the loopback stand-in, so its p50 is 0.00 ms; dropped frames have
+  no present-side sample, so percentiles describe presented frames only.
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0107 · DXGI capturer MVP (Windows)
