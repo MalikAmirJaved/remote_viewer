@@ -25,7 +25,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
-| T-0202 | Quinn connect/accept wrapper | P2 | TODO | unassigned | T-0201 |
+| T-0202 | Quinn connect/accept wrapper | P2 | CLAIMED | opencode-a2 | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | TODO | unassigned | T-0003 |
@@ -349,17 +349,18 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0202 · Quinn connect/accept wrapper
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0201
 - **Touches:** crates/vd-net/**
 - **Branch:** agent/network-transport/T-0202
 - **Acceptance:**
   - LAN connect between two processes; idle timeout configured; docs for knobs in HANDOFF
-- **Notes / links:** —
-- **Updated:** 2026-11-17 by cursor-init
+- **Notes / links:** ADR-0002; `quinn`/`rustls`/`rcgen` pinned crate-locally (architect may
+  promote to `[workspace.dependencies]` later). Cargo.lock updated.
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0203 · Reliable streams mapping for Control/Input
 - **Status:** TODO
