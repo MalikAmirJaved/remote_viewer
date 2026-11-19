@@ -11,7 +11,12 @@ vd-common = { workspace = true }
 tracing = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-windows = { workspace = true }
+# Extra bindings beyond the workspace set: D3D11 device/texture APIs for DXGI Desktop
+# Duplication (T-0107). Features are additive per crate; the workspace entry stays shared.
+windows = { workspace = true, features = [
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+] }
 
 [lints]
 workspace = true

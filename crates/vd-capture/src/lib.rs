@@ -4,6 +4,9 @@
 
 pub mod fake;
 
+#[cfg(windows)]
+pub mod dxgi;
+
 use vd_common::{Error, Result};
 
 pub use fake::{render_test_pattern, FakeCaptureConfig, FakeCapturer};
@@ -55,6 +58,16 @@ pub trait Capturer: Send {
     /// # Errors
     /// Platform failures on stop.
     fn stop(&mut self) -> Result<()>;
+
+    /// Consume a pending "the next frame must be an IDR" hint.
+    ///
+    /// Backends whose capture surface can disappear and be rebuilt (DXGI
+    /// `ACCESS_LOST` on desktop switch, resolution change, secure desktop) set this,
+    /// because the decoder cannot recover mid-GOP after the producer restarts. The
+    /// default is `false`; backends that never lose their surface keep it.
+    fn take_needs_keyframe(&mut self) -> bool {
+        false
+    }
 }
 
 /// Stub capturer for compile/link on all platforms.
@@ -77,27 +90,9 @@ impl Capturer for StubCapturer {
 
 #[cfg(windows)]
 pub mod windows {
-    //! DXGI Desktop Duplication / WGC backends (stubs).
-    use super::{CapturedFrame, Capturer};
-    use vd_common::{Error, Result};
-
-    /// Windows DXGI Desktop Duplication capturer (stub).
-    #[derive(Debug, Default)]
-    pub struct DxgiCapturer;
-
-    impl Capturer for DxgiCapturer {
-        fn start(&mut self, _monitor_index: u32) -> Result<()> {
-            Err(Error::NotImplemented("DXGI Desktop Duplication"))
-        }
-
-        fn capture_frame(&mut self) -> Result<Option<CapturedFrame>> {
-            Err(Error::NotImplemented("DXGI capture_frame"))
-        }
-
-        fn stop(&mut self) -> Result<()> {
-            Ok(())
-        }
-    }
+    //! Windows backends. DXGI Desktop Duplication is the P1 primary path; a WGC
+    //! fallback lands with the multi-monitor work (T-0605).
+    pub use super::dxgi::DxgiCapturer;
 }
 
 #[cfg(target_os = "linux")]
