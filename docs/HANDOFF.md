@@ -277,4 +277,43 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   Software encode cannot hold 720p60 or 1080p30 on this CPU; that is the P5 HW-encode
   trigger, not a queue-policy bug.
 
+## 2026-11-19 04:56 · opencode-a2 · role: network-transport · T-0202
+- Did: added `vd-net::quic` — a real QUIC endpoint wrapper. `QuicServer::bind_with` /
+  `accept`, `QuicClient::connect` with a pinned server certificate, raw `open_bi` /
+  `accept_bi` streams for T-0203/T-0204, ALPN `vd/1`, TLS 1.3 via quinn + rustls, and
+  `examples/quic_ping.rs` for a two-process check. New deps (`quinn` 0.11, `rustls`
+  0.23 ring-only, `rcgen` 0.13) are crate-local; Tokio is a dev-dependency only because
+  the library must not own a runtime.
+- State: 5 integration tests green over real UDP loopback (round-trip, unpinned cert
+  rejected, unknown server name rejected, zero idle timeout rejected, idle close at the
+  configured timeout). Manual two-process run: server + client processes on this machine
+  exchanged `ping from vd-net` / `pong from vd-net`. fmt / clippy `-D warnings` /
+  `cargo test --workspace` green (58 passed, 1 ignored).
+- Decisions: certificate **pinning** instead of a skip-verification verifier — a dev
+  self-signed cert is exchanged out of band and pinned in a rustls root store, so the
+  insecure option never exists in the API. Idle timeout is applied through
+  `TransportConfig::max_idle_timeout` on both ends. `accept_bi` exposes quinn's actual
+  signature (no `Option` wrapper); server-side `remote_address()` is the client's
+  ephemeral port, which the tests now assert correctly.
+- **Knobs (acceptance asks for these in HANDOFF):**
+  - `QuicConfig { idle_timeout }` — default `DEFAULT_IDLE_TIMEOUT` = 10 s; zero is
+    rejected with `InvalidArgument`; both server and client must set it (each side
+    enforces its own).
+  - Bind/connect address: `QuicServer::bind(addr)` resolves port 0 to a real port
+    (`local_addr()`); `QuicClient::connect(addr, server_name, cert_der, cfg)` picks a
+    wildcard local port for the address family.
+  - `server_name` must be covered by the certificate SANs: the dev identity covers
+    `localhost` and `vd-local`.
+  - ALPN is a constant (`quic::ALPN`, `vd/1`); mismatched ALPN fails the handshake.
+  - Certificate: `server.cert_der()` → bytes the client passes to `connect` (the example
+    writes them to `target/quic-dev-cert.der`).
+- Next: T-0203 (Control/Input reliable streams) and T-0204 (Video/Feedback datagrams)
+  are now unblocked. P1 still needs three independent reviews (T-0105/T-0106/T-0107);
+  T-0202 needs its own reviewer.
+- Gotchas: handshake failures only surface when the server side is actually polling
+  `accept()` — a test that never accepts waits for the idle timeout instead of a TLS
+  error. Dropping `QuicClient` drops its endpoint; use `QuicClient::close` for a clean
+  application close. The dev certificate is per-process and unauthenticated: do not
+  mistake it for the P3 identity story.
+
 

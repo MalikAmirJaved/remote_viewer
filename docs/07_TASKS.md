@@ -25,7 +25,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
-| T-0202 | Quinn connect/accept wrapper | P2 | CLAIMED | opencode-a2 | T-0201 |
+| T-0202 | Quinn connect/accept wrapper | P2 | REVIEW | opencode-a2 | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | TODO | unassigned | T-0003 |
@@ -349,7 +349,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0202 · Quinn connect/accept wrapper
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
 - **Owner:** opencode-a2
@@ -360,6 +360,25 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
   - LAN connect between two processes; idle timeout configured; docs for knobs in HANDOFF
 - **Notes / links:** ADR-0002; `quinn`/`rustls`/`rcgen` pinned crate-locally (architect may
   promote to `[workspace.dependencies]` later). Cargo.lock updated.
+- **Implementation:** `vd-net::quic` — `QuicServer::bind_with(addr, QuicConfig)` →
+  `accept()`, and `QuicClient::connect(addr, server_name, pinned_cert_der, cfg)` →
+  raw `open_bi`/`accept_bi` streams for T-0203/T-0204. TLS 1.3 via quinn/rustls, ALPN
+  `vd/1`, self-signed dev identity (SANs `localhost`, `vd-local`) generated per server;
+  the client **pins** that DER certificate in a rustls root store — there is no
+  skip-verification path. Idle timeout is a `TransportConfig::max_idle_timeout` applied
+  to both ends (default 10 s). Tokio is a dev-dependency only: the library owns no
+  runtime, and all entry points require the caller's runtime (quinn needs one).
+- **Verified:** 5 integration tests over real UDP loopback — stream round-trip
+  (ping/pong), unpinned certificate rejected, unknown server name rejected, zero idle
+  timeout rejected, idle connection closed by the configured 300 ms timeout. Manual
+  two-process check: `examples/quic_ping.rs` server process + client process on this
+  machine exchanged `ping from vd-net` → `pong from vd-net` (server logged
+  `accepted connection from 127.0.0.1:<port>`). Both processes ran on the same host over
+  loopback, **not** across two physical machines.
+- **Known limits:** dev certificate is regenerated per process (no persistence, no CA);
+  identity distribution belongs to P3 signalling. Client endpoint binds wildcard and
+  reports `0.0.0.0:<port>` as its local address. Stream priorities/datagram mapping are
+  deliberately out of scope (T-0203/T-0204). No NAT traversal or hole punching yet.
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0203 · Reliable streams mapping for Control/Input

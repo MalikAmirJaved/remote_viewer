@@ -24,6 +24,8 @@ releases begin.
   live counters and clean shutdown (`apps/vd-viewer`)
 - Per-stage latency report: `vd-bench` prints nearest-rank p50/p95/p99 per stage from
   real loopback runs (`tools/vd-bench`, `RunStats.samples`)
+- QUIC transport: `vd-net::quic` connects/accepts over TLS 1.3 with a pinned
+  certificate, configurable idle timeout and ALPN `vd/1` (`quinn`)
 - P2 groundwork: in-memory `Transport` adapter over `vd-netsim` with contract tests
 
 ## [0.1.0] — 2026-11-17
