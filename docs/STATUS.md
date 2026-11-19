@@ -6,7 +6,8 @@
 
 **P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW** (T-0105
 viewer window, T-0106 latency report, T-0107 DXGI capturer). No P1 work is unimplemented.
-**P2 started**: T-0201 DONE, T-0202 (QUIC connect/accept) in REVIEW.
+**P2 started**: T-0201 DONE; T-0202 (QUIC connect/accept) and T-0205 (video fragmenter)
+in REVIEW.
 
 ## Task completion by phase
 
@@ -42,6 +43,8 @@ None — see [agents/LOCKS.md](agents/LOCKS.md).
    p50/p95/p99; 720p30 total p50 24.75 ms with 0 drops (software H.264)
 7. `2026-11-19 · opencode-a2 · network-transport · T-0202` — real QUIC connect/accept
    with pinned dev cert; two-process loopback ping/pong, idle timeout configurable
+8. `2026-11-19 · opencode-a2 · network-transport · T-0205` — video fragmenter: encoded
+   frame → 1150 B `VideoFrameFragment`s, validated, tested against a real `EncodedFrame`
 
 ## Open questions
 
@@ -49,7 +52,8 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- None for code. Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202** (P2).
+- None for code. Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202 / T-0205**
+  (P2).
 - Accepted P1 limits (see HANDOFF 2026-11-19): DXGI rotated outputs and the hardware
   cursor are not captured; one `Vec<u8>` allocation per captured frame until the P5
   buffer pool / GPU path; the viewer converts RGBA→`ColorImage` and re-uploads the full
@@ -57,6 +61,8 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
   presented frames only and `present` is still the loopback stand-in.
 - QUIC identity is a per-process self-signed certificate pinned out of band; real
   identity distribution is P3 signalling, not a P2 deliverable.
+- Video fragments carry no dirty rects yet: `vd_codec::EncodedFrame` does not propagate
+  capture dirty rects, so `dirty_rects` is `None` until a codec/proto change (architect).
 
 ## Latest benchmark numbers
 

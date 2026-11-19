@@ -316,4 +316,31 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   application close. The dev certificate is per-process and unauthenticated: do not
   mistake it for the P3 identity story.
 
+## 2026-11-19 05:54 · opencode-a2 · role: network-transport · T-0205
+- Did: added `vd_net::video::fragment_frame` — splits one encoded frame into
+  `vd_proto::VideoFrameFragment`s in send order with a 1150 B default cap
+  (`DEFAULT_MAX_FRAGMENT_DATA`; `MTU` = 1200), repeated metadata, exact `frag_total`, and
+  `InvalidArgument` for empty payloads, zero/oversized dimensions, empty codec ids, a zero
+  cap, or frames needing >`u16::MAX` fragments. Tests: 7 module tests + 2 integration
+  tests that fragment a **real** `vd_codec::EncodedFrame`.
+- State: fmt / clippy `-D warnings` / `cargo test --workspace` green (67 passed, 1
+  ignored = the live DXGI capture test).
+- Deviations (deliberate):
+  - The public input is `EncodedFrameRef`, a borrowed field-for-field view of
+    `vd_codec::EncodedFrame`, not the codec type. Architecture §3 allows only downward
+    deps, so `vd-net` cannot link `vd-codec` in its product graph without an
+    architect/ADR decision. `vd-codec` is a **dev-dependency** only, used to prove the
+    acceptance case against the real encoder output. If the architect prefers a direct
+    `vd-net → vd-codec` edge, this becomes a one-line signature change.
+  - Fragments carry `dirty_rects: None` because `vd_codec::EncodedFrame` has no dirty-rect
+    field; capture rects are dropped at the encoder boundary today. Needs a codec/proto
+    change (architect), not a fragmenter fix.
+- Next: T-0206 reassembler can build on `VideoFrameFragment` directly and share the
+  `frame_id`/`frag_total` assumptions; T-0207 pacer consumes the fragment list. Open
+  reviews: T-0105/T-0106/T-0107 (P1), T-0202 and T-0205 (P2).
+- Gotchas: `frag_idx`/`frag_total` are `u16`, so a frame over ~75 MB at the default cap is
+  rejected rather than silently truncated. Each fragment owns a copied `Vec<u8>` — fine
+  for now, but a per-frame buffer pool belongs with the P5 buffer work. 1150 B is the data
+  budget; keep serialized envelope overhead inside the remaining ~50 B of the 1200 B MTU.
+
 

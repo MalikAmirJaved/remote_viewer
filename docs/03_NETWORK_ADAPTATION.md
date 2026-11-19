@@ -47,6 +47,7 @@ Hysteresis: **fast down** (~100 ms), **slow up** (~2–3 s) to avoid oscillation
 ## 5. Loss resilience
 
 - MTU-safe fragments (~1150 B) with `frame_id` / `frag_idx` / `frag_total`.
+  Implementation: `vd-net::video::fragment_frame` (`MTU` 1200, data cap 1150 B).
 - **NACK** for small gaps.
 - **On-demand IDR / intra-refresh** instead of waiting to retransmit large frames.
 - Optional XOR / Reed-Solomon FEC for keyframes; adaptive FEC ratio from measured loss

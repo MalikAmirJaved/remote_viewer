@@ -28,7 +28,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0202 | Quinn connect/accept wrapper | P2 | REVIEW | opencode-a2 | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
-| T-0205 | Video fragmenter (~1150 B) | P2 | TODO | unassigned | T-0003 |
+| T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
 | T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
@@ -408,17 +408,41 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0205 · Video fragmenter (~1150 B)
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0003
 - **Touches:** crates/vd-net/** or crates/vd-proto/**
 - **Branch:** agent/network-transport/T-0205
 - **Acceptance:**
   - Splits EncodedFrame into VideoFrameFragment list; unit test
-- **Notes / links:** docs/03_NETWORK_ADAPTATION.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Implementation:** `vd_net::video` — `fragment_frame(EncodedFrameRef, FragmentConfig)` →
+  `Vec<vd_proto::VideoFrameFragment>` in send order. Default cap
+  `DEFAULT_MAX_FRAGMENT_DATA` = 1150 B (`MTU` = 1200), every fragment repeats the frame
+  metadata, `frag_idx` is 0-based and `frag_total` is the exact count, and concatenating
+  `data` in index order reproduces the bitstream. Inputs that would break the wire format
+  are rejected with `InvalidArgument`: empty payload, zero or >`u16` dimension, empty
+  codec id, zero fragment cap, and >`u16::MAX` fragments.
+- **Deviation (documented, not silently reworded):** the production signature takes
+  [`EncodedFrameRef`] — a borrowed, field-for-field view of `vd_codec::EncodedFrame` —
+  instead of the codec type itself. Architecture §3 only allows downward dependencies
+  (`feature → vd-proto/vd-common`), so linking `vd-codec` from `vd-net` would be a
+  feature→feature edge needing an architect/ADR decision. `vd-codec` is therefore a
+  **dev-dependency** only: `tests/video_fragment.rs` builds a real `EncodedFrame`,
+  fragments it, and asserts byte-for-byte round-trip, so the acceptance case is exercised
+  against the actual encoder type. Apps copy the seven fields into the view.
+- **Verified:** 7 module tests (exact multiple, short tail, single small keyframe with
+  full metadata comparison, custom 4 B cap, all validation errors, `u16::MAX` fragment
+  overflow, cap boundary at 1/1149/1150/1151 B) and 2 integration tests using a real
+  `EncodedFrame` (4-fragment keyframe round-trip, one-datagram delta frame). fmt /
+  clippy `-D warnings` / `cargo test --workspace` green.
+- **Known limits:** `dirty_rects` is `None` — `vd_codec::EncodedFrame` does not carry
+  capture dirty rects yet. Fragments are copied into per-fragment `Vec<u8>` (allocation
+  per fragment; P5 buffer-pool work). No pacing (T-0207), no FEC/NACK (T-0206/T-0402).
+- **Notes / links:** docs/03_NETWORK_ADAPTATION.md §5; took the `crates/vd-net/**` arm so
+  `vd-proto` (architect-owned) is untouched.
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0206 · Video reassembler latest-frame-wins
 - **Status:** TODO
