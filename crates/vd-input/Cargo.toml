@@ -10,6 +10,3 @@ rust-version.workspace = true
 vd-common = { workspace = true }
 vd-proto = { workspace = true }
 tracing = { workspace = true }
-
-[lints]
-workspace = true

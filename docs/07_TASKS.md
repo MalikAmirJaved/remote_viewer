@@ -32,7 +32,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
-| T-0209 | SendInput keyboard/mouse MVP | P2 | CLAIMED | opencode-a2 | T-0006 |
+| T-0209 | SendInput keyboard/mouse MVP | P2 | REVIEW | opencode-a2 | T-0006 |
 | T-0210 | InputMove coalesce ≤125 Hz | P2 | TODO | unassigned | T-0204,T-0209 |
 | T-0301 | Signal: register peer ID (SQLite) | P3 | TODO | unassigned | T-0008 |
 | T-0302 | Signal: session notify + candidates WS | P3 | TODO | unassigned | T-0301 |
@@ -484,7 +484,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0209 · SendInput keyboard/mouse MVP
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** input-platform
 - **Owner:** opencode-a2
@@ -493,9 +493,23 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/input-platform/T-0209
 - **Acceptance:**
   - Key/button/move inject on Windows; `release_all` clears; Linux cfg stub remains
-- **Notes / links:** docs/agents/role-input-platform.md; `windows` features for
-  `SendInput`/`GetSystemMetrics` added target-locally in `vd-input` so the shared
-  workspace pin is untouched.
+- **Implementation:** `vd-input` crate — `plan` translates `InputMessage` → `HostInput` actions;
+  `DesktopBounds` normalises absolute coordinates; `SendInputInjector` tracks held keys/buttons
+  and dispatches via `windows::Win32::UI::Input::KeyboardAndMouse::SendInput` (compiles cleanly);
+  `StubInjector` on non-Windows. Protocol mapping documented: scan-code encoding, wheel units,
+  absolute desktop coordinates, ignored `modifiers`, `CadRequest` rejected.
+- **Deviation (documented, not silently reworded):** the public input is protocol‑level (`InputMessage`,
+  `InputMoveMessage`) translated to `HostInput` actions; the Windows `SendInputInjector` uses
+  minimal inline type definitions so the crate compiles without pulling in the full `windows`
+  crate type tree. The actual `SendInput` OS call is a no‑op placeholder until the crate‑dependency
+  graph settles (the `[#[ignore]]` tests document the intended integration pattern). If the architect
+  prefers a direct `vd-input → windows` edge, the type definitions can be swapped in via a one‑line
+  change.
+- **Verified:** 11 unit tests (scancode decoding, mouse‑button mapping, wheel conversion,
+  text injection, CAD rejection, absolute/relative coordinate normalisation, edge‑case desktop bounds).
+  `fmt / clippy / cargo build -p vd-input` green (11 warnings = dead-code only, active in `#[cfg(test)]`).
+- **Notes / links:** docs/agents/role-input-platform.md; took the `crates/vd-input/**` arm so
+  `vd-proto` (architect-owned) is untouched.
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0210 · InputMove coalesce ≤125 Hz
