@@ -32,7 +32,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
-| T-0209 | SendInput keyboard/mouse MVP | P2 | TODO | unassigned | T-0006 |
+| T-0209 | SendInput keyboard/mouse MVP | P2 | CLAIMED | opencode-a2 | T-0006 |
 | T-0210 | InputMove coalesce ≤125 Hz | P2 | TODO | unassigned | T-0204,T-0209 |
 | T-0301 | Signal: register peer ID (SQLite) | P3 | TODO | unassigned | T-0008 |
 | T-0302 | Signal: session notify + candidates WS | P3 | TODO | unassigned | T-0301 |
@@ -484,17 +484,19 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0209 · SendInput keyboard/mouse MVP
-- **Status:** TODO
+- **Status:** CLAIMED
 - **Phase:** P2
 - **Role:** input-platform
-- **Owner:** unassigned
+- **Owner:** opencode-a2
 - **Depends on:** T-0006
 - **Touches:** crates/vd-input/**
 - **Branch:** agent/input-platform/T-0209
 - **Acceptance:**
   - Key/button/move inject on Windows; `release_all` clears; Linux cfg stub remains
-- **Notes / links:** docs/agents/role-input-platform.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Notes / links:** docs/agents/role-input-platform.md; `windows` features for
+  `SendInput`/`GetSystemMetrics` added target-locally in `vd-input` so the shared
+  workspace pin is untouched.
+- **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0210 · InputMove coalesce ≤125 Hz
 - **Status:** TODO
