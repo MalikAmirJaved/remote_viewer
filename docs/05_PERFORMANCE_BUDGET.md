@@ -60,7 +60,8 @@ Presets: [`scripts/netem/`](../scripts/netem) · in-process: `vd-netsim`.
 
 | Date | Stage | Context | N | p50 | max | Notes |
 |------|-------|---------|---|-----|-----|-------|
-| 2026-11-19 | Capture — DXGI Desktop Duplication, 1680×1050 BGRA8 | dev box, `dev` (debug) build, moving window as activity | 60 | 3.1 ms | 4.5 ms | `capture_frame` incl. staging copy + tight BGRA buffer. p50 inside the ≤ 4 ms capture budget; max over it in a debug build. Not comparable to release/GPU paths. |
+| 2026-11-19 | Capture — DXGI Desktop Duplication, 1680×1050 BGRA8 | dev box, `dev` build, moving window | 60 | 3.1 ms | 4.5 ms | `capture_frame` incl. staging copy + tight BGRA buffer. p50 inside the ≤ 4 ms capture budget; max over it. |
+| 2026-11-19 | Capture — same path, `--release` | 53 | 3.4 ms | 5.6 ms | No gain over the debug run ⇒ the cost is dominated by the GPU copy + `Map` synchronisation, not the CPU row copy or the per-frame allocation. Still inside budget at p50; the tail is not. |
 
 ## Related
 

@@ -169,9 +169,12 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   `windows` features (`Win32_Graphics_Direct3D`, `..._Direct3D11`) and a default
   `Capturer::take_needs_keyframe()` trait method. Replaced the Windows stub with a
   re-export; Linux/macOS stubs untouched.
-- State: measured on this machine, 1680x1050, **debug** build, 60 frames with a moving
-  window: capture mean 3225 us, p50 3121 us, max 4523 us (budget ≤4 ms; p50 inside, max
-  over in an unoptimised build). Verified by the ignored test
+- State: measured on this machine, 1680x1050, with desktop activity: `dev` build 60
+  frames — mean 3225 us, p50 3121 us, max 4523 us; `--release` 53 frames — mean
+  3470 us, p50 3388 us, max 5623 us. Release showed no gain, so this stage is bound by
+  the GPU copy + `Map` synchronisation, not the CPU row copy or the per-frame
+  allocation. p50 is inside the ≤4 ms capture budget in both runs; the tail is not.
+  Verified by the ignored test
   `vd_capture::dxgi::tests::dxgi_captures_primary_output_and_recovers` — start, frame
   acquisition, BGRA size/format, dirty-rect bounds, rebuild path, clean stop. Workspace
   fmt / clippy `-D warnings` / `cargo test --workspace` green (41 passed, 1 ignored).
