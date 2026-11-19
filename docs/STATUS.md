@@ -1,11 +1,13 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-19 by opencode-a2 (review)
+**Updated:** 2026-11-19 by opencode-a2 (viewer-ui)
 
 ## Current phase
 
-**P1 Local pipeline — 6/8 DONE.** Remaining: **T-0105** (egui present) and **T-0106**
-(latency report). P2 has started (transport tests done, quinn next).
+**P1 Local pipeline — 6/8 DONE, T-0105 in REVIEW.** Remaining: **T-0106** (latency
+report). T-0105 (viewer window) is implemented and needs an independent reviewer;
+T-0107 (DXGI capturer) is in the same state. P2 has started (transport tests done,
+quinn next).
 
 ## Task completion by phase
 
@@ -35,6 +37,8 @@ None — see [agents/LOCKS.md](agents/LOCKS.md).
    p50 3.1 ms (dev) / 3.4 ms (release) at 1680×1050
 4. `2026-11-19 · opencode-a2 · reviewer` — T-0101…T-0104, T-0108, T-0201 accepted as
    DONE; P1 unblocked for T-0105/T-0106
+5. `2026-11-19 · opencode-a2 · viewer-ui · T-0105` — real eframe window presents
+   decoded loopback frames; release: 28.9 fps, 0 dropped at 960×540; clean close
 
 ## Open questions
 
@@ -42,10 +46,11 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- None. P1 exit needs T-0105 + T-0106 only.
+- None for code. P1 exit needs **T-0106** plus reviews of T-0105/T-0107.
 - Accepted P1 limits (see HANDOFF 2026-11-19): DXGI rotated outputs and the hardware
   cursor are not captured; one `Vec<u8>` allocation per captured frame until the P5
-  buffer pool / GPU path.
+  buffer pool / GPU path; the viewer converts RGBA→`ColorImage` and re-uploads the full
+  texture per frame on the UI thread until the P5 GPU path.
 
 ## Latest benchmark numbers
 

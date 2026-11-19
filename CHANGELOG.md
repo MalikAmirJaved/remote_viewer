@@ -20,6 +20,8 @@ releases begin.
   (`tools/loopback`) with per-stage timings and drop-oldest queues
 - Real Windows capture: DXGI Desktop Duplication backend with dirty rects and
   access-lost recovery (`vd-capture::dxgi`)
+- Viewer window: eframe/egui presents decoded loopback frames with start/stop controls,
+  live counters and clean shutdown (`apps/vd-viewer`)
 - P2 groundwork: in-memory `Transport` adapter over `vd-netsim` with contract tests
 
 ## [0.1.0] — 2026-11-17

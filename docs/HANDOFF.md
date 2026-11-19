@@ -222,4 +222,32 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   deviation and T-0107's never-triggered `ACCESS_LOST` path first. `decode()` returning
   `Unavailable` for access units that produce no frame is a real P2 tolerance item.
 
+## 2026-11-19 04:34 · opencode-a2 · role: viewer-ui · T-0105
+- Did: turned `apps/vd-viewer` from a stub into a real eframe window. `loopback.rs` runs
+  fake capture → openh264 encode → openh264 decode on one worker thread and publishes
+  decoded RGBA frames into a cap-1 latest-frame channel (worker evicts stale frames).
+  `main.rs` uploads the newest frame with `TextureHandle::set`, letterboxes it, and adds
+  Start/Stop/Restart, Esc=close, F5=restart, a status bar (presented / pipeline /
+  dropped / measured UI fps / worker error) and `on_exit` worker shutdown. Added
+  `vd-capture` + `crossbeam-channel` to the viewer's dependencies.
+- State: verified on this machine at 960x540, 30 fps requested — `--release` window
+  reported 265 presented / 265 pipeline / 0 dropped and 28.9 UI fps (screenshot shows
+  the fake gradient rendered); `dev` build managed ~8 fps because openh264 is compiled
+  with `OPT_LEVEL=0` in dev. Window closed via `WM_CLOSE` with exit code 0 and the
+  worker joined. `cargo fmt --all --check`, `clippy --workspace --all-targets -D warnings`
+  and `cargo test --workspace` green (49 passed, 1 ignored).
+- Decisions: kept egui **glow** (the pinned eframe feature per ADR-0006) and recorded
+  that the acceptance wording says "egui/wgpu" — wgpu is a P5 decision, so this task
+  satisfies "via egui" only. Decode stays off the UI thread (role rule). The UI drains
+  the newest frame and counts skipped frames as dropped, so the status bar cannot
+  disagree with the worker's view of loss.
+- Next: T-0106 (per-stage latency spans + report) is now the last P1 task; T-0105 and
+  T-0107 still need an independent reviewer. Later integration: swap `FakeCapturer` for
+  `DxgiCapturer` inside `tools/loopback` (follow-up task; that path was T-0104's).
+- Gotchas: the per-frame RGBA→`ColorImage` conversion plus full-texture upload on the
+  UI thread is a P1 shortcut — the P5 GPU/NV12 path must replace it. `TextureHandle`
+  is recreated when frame dimensions change; a resize mid-stream is handled but not
+  tested. Launching the window from a headless/RDP-disconnected session will not render
+  (needs a desktop), same constraint as the ignored DXGI test.
+
 

@@ -20,7 +20,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0102 | Wire openh264 SW encoder | P1 | DONE | opencode-a1 | T-0101 |
 | T-0103 | Wire openh264 SW decoder | P1 | DONE | opencode-a1 | T-0102 |
 | T-0104 | Loopback pipeline thread + channels | P1 | DONE | opencode-a1 | T-0103 |
-| T-0105 | egui present decoded texture | P1 | CLAIMED | opencode-a2 | T-0104 |
+| T-0105 | egui present decoded texture | P1 | REVIEW | opencode-a2 | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
@@ -238,7 +238,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0105 · egui present decoded texture
-- **Status:** CLAIMED
+- **Status:** REVIEW
 - **Phase:** P1
 - **Role:** viewer-ui
 - **Owner:** opencode-a2
@@ -248,6 +248,22 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Acceptance:**
   - Window shows loopback frames via egui/wgpu; close cleanly
 - **Notes / links:** docs/adr/0006-viewer-ui-egui.md
+- **Implementation:** `apps/vd-viewer/src/main.rs` is now a real eframe window;
+  `apps/vd-viewer/src/loopback.rs` runs fake capture → H.264 encode → H.264 decode on
+  one worker thread and publishes into a cap-1 latest-frame channel. egui **glow**
+  renderer (ADR-0006 pins `glow`; wgpu is a P5 decision), so this is "via egui", not
+  "via wgpu" — recorded rather than silently reworded. Window: top bar with
+  Start/Stop/Restart, Esc closes, F5 restarts; status bar with requested size/fps,
+  presented/pipeline/dropped counters, measured UI fps and worker errors.
+  `--peer` is accepted but unused until P2.
+- **Measured (this machine, 960x540, 30 fps requested):** `--release` window ran
+  265 presented / 265 pipeline / 0 dropped, status bar 28.9 fps UI. `dev` build
+  managed ~8 fps (openh264 compiles at `OPT_LEVEL=0` in dev) — not a pipeline
+  regression, just an unoptimised C codec. Close via `WM_CLOSE` exited 0 and joined
+  the worker.
+- **Known limits:** decoded RGBA→`ColorImage` conversion plus a `TextureHandle::set`
+  full-texture upload per frame on the UI thread (P1; the P5 GPU/NV12 path removes it);
+  no input injection, cursor overlay or connect form yet.
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0106 · Per-stage latency spans + report
