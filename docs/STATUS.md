@@ -1,23 +1,24 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-17 by cursor-init
+**Updated:** 2026-11-19 by opencode-a2 (review)
 
 ## Current phase
 
-**P0 Foundation — complete (scaffold).** Next: **P1 Local pipeline**.
+**P1 Local pipeline — 6/8 DONE.** Remaining: **T-0105** (egui present) and **T-0106**
+(latency report). P2 has started (transport tests done, quinn next).
 
 ## Task completion by phase
 
 | Phase | Done | Total tracked | % |
 |-------|------|---------------|---|
 | P0 | 8 | 8 | 100% |
-| P1 | 0 | 7 | 0% |
-| P2 | 0 | 10 | 0% |
+| P1 | 6 | 8 | 75% |
+| P2 | 1 | 10 | 10% |
 | P3 | 0 | 9 | 0% |
 | P4 | 0 | 10 | 0% |
 | P5 | 0 | 3 | 0% |
 | P6 | 0 | 6 | 0% |
-| **All** | **8** | **53** | **~15%** |
+| **All** | **15** | **53** | **~28%** |
 
 *(P7–P9 tracked in roadmap; fine-grained tasks to be added later.)*
 
@@ -28,7 +29,12 @@ None — see [agents/LOCKS.md](agents/LOCKS.md).
 ## Last HANDOFF headlines
 
 1. `2026-11-17 · cursor-init · architect · T-0001` — workspace/docs/stubs initialized
-2. *(no further entries yet)*
+2. `2026-11-18 · opencode-a1 · … · T-0108 → T-0104` — openh264 deps/pins, fake capture,
+   SW encode/decode, loopback threads; all measured on Windows
+3. `2026-11-19 · opencode-a2 · capture-codec · T-0107` — real DXGI capturer; capture
+   p50 3.1 ms (dev) / 3.4 ms (release) at 1680×1050
+4. `2026-11-19 · opencode-a2 · reviewer` — T-0101…T-0104, T-0108, T-0201 accepted as
+   DONE; P1 unblocked for T-0105/T-0106
 
 ## Open questions
 
@@ -36,12 +42,17 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- None for P0. P1 openh264 dependency not yet added (intentional).
+- None. P1 exit needs T-0105 + T-0106 only.
+- Accepted P1 limits (see HANDOFF 2026-11-19): DXGI rotated outputs and the hardware
+  cursor are not captured; one `Vec<u8>` allocation per captured frame until the P5
+  buffer pool / GPU path.
 
 ## Latest benchmark numbers
 
 | Date | Profile | p50 ms | p95 ms | Notes |
 |------|---------|--------|--------|-------|
-| — | — | — | — | **not measured yet** |
+| — | — | — | — | **no glass-to-glass measurement yet** |
 
-See [05_PERFORMANCE_BUDGET.md](05_PERFORMANCE_BUDGET.md).
+Stage-level numbers (capture) are in
+[05_PERFORMANCE_BUDGET.md](05_PERFORMANCE_BUDGET.md#stage-measurements-host-side-not-glass-to-glass).
+

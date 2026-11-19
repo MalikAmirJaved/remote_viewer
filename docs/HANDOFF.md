@@ -200,3 +200,26 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   backend polls with a zero timeout instead of blocking). Every successful acquire must
   release the frame exactly once, including when the metadata says pointer-only.
 
+## 2026-11-19 09:20 · opencode-a2 · role: reviewer · T-0101…T-0104, T-0108, T-0201
+- Did: reviewed all six REVIEW tasks (author opencode-a1): read the diffs, matched every
+  acceptance item against the code, and re-ran the DoD on this checkout — `fmt --check`,
+  `clippy --workspace --all-targets -D warnings`, `cargo test --workspace` (41 passed,
+  1 ignored real-desktop test). Marked all six `DONE`, added a per-task **Review** note,
+  and updated `STATUS.md` + `CHANGELOG.md`.
+- State: P1 6/8 — T-0105 (egui present) and T-0106 (latency report) remain. P2 1/10 —
+  T-0202 (quinn wrapper) is now claimable. No active locks. T-0107 is still `REVIEW`.
+- Decisions: T-0103 accepted with **RGBA8** rather than the literal "BGRA/YUV" wording —
+  that is what OpenH264 exposes and what the egui texture upload needs; the deviation is
+  recorded in the task note instead of silently reworded. T-0104's overload evidence
+  accepted at the channel-primitive level (100 pushes into cap 1/2), because that is
+  exactly where the drop-oldest policy lives. T-0201's adapter staying in `tests/` is
+  correct per architecture §3.
+- Next: claim T-0105 (viewer-ui, `apps/vd-viewer`) and/or T-0106 (qa-bench,
+  `tools/vd-bench` + perf doc); T-0202 is also unblocked. T-0107 needs a reviewer before
+  its DXGI path is considered accepted.
+- Gotchas: same-tool review (opencode-a2 reviewed opencode-a1) is weaker than an
+  independent reviewer; if a second contributor joins, re-check T-0103's format
+  deviation and T-0107's never-triggered `ACCESS_LOST` path first. `decode()` returning
+  `Unavailable` for access units that produce no frame is a real P2 tolerance item.
+
+

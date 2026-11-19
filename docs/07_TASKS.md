@@ -16,15 +16,15 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0006 | Trait stubs capture/codec/net/input/crypto | P0 | DONE | cursor-init | T-0002 |
 | T-0007 | CI workflow fmt/clippy/nextest/deny | P0 | DONE | cursor-init | T-0001 |
 | T-0008 | App/tool binary stubs | P0 | DONE | cursor-init | T-0006 |
-| T-0101 | Fake frame source for loopback | P1 | REVIEW | opencode-a1 | T-0006 |
-| T-0102 | Wire openh264 SW encoder | P1 | REVIEW | opencode-a1 | T-0101 |
-| T-0103 | Wire openh264 SW decoder | P1 | REVIEW | opencode-a1 | T-0102 |
-| T-0104 | Loopback pipeline thread + channels | P1 | REVIEW | opencode-a1 | T-0103 |
+| T-0101 | Fake frame source for loopback | P1 | DONE | opencode-a1 | T-0006 |
+| T-0102 | Wire openh264 SW encoder | P1 | DONE | opencode-a1 | T-0101 |
+| T-0103 | Wire openh264 SW decoder | P1 | DONE | opencode-a1 | T-0102 |
+| T-0104 | Loopback pipeline thread + channels | P1 | DONE | opencode-a1 | T-0103 |
 | T-0105 | egui present decoded texture | P1 | TODO | unassigned | T-0104 |
 | T-0106 | Per-stage latency spans + report | P1 | TODO | unassigned | T-0104 |
 | T-0107 | DXGI capturer MVP (Windows) | P1 | REVIEW | opencode-a2 | T-0006 |
-| T-0108 | P1 dependency unblock + ADR-0007 | P1 | REVIEW | opencode-a1 | T-0006 |
-| T-0201 | Transport trait integration tests w/ netsim | P2 | REVIEW | opencode-a1 | T-0004 |
+| T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
+| T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | TODO | unassigned | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
@@ -170,7 +170,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0101 · Fake frame source for loopback
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -179,11 +179,13 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/capture-codec/T-0101
 - **Acceptance:**
   - `Capturer` impl yields patterned BGRA frames at configurable fps; unit test
+- **Review:** accepted 2026-11-19 by opencode-a2 — 5 tests (config, interval, layout,
+  index encoding, manual-clock pacing); `Ok(None)`-before-due semantics match the trait.
 - **Notes / links:** docs/06_ROADMAP.md#p1--local-pipeline
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0102 · Wire openh264 SW encoder
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -192,11 +194,14 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/capture-codec/T-0102
 - **Acceptance:**
   - Encode fake frame to Annex-B/AVCC H.264; force_idr works; low-latency flags set
+- **Review:** accepted 2026-11-19 by opencode-a2 — Annex-B start code asserted, force_idr
+  and rebuild-keyframe tested; low-latency config visible in `h264_config`. Bitrate is
+  advisory (`skip_frames(false)`), correctly deferred to T-0403.
 - **Notes / links:** docs/adr/0005-capture-encode-decode-traits.md
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0103 · Wire openh264 SW decoder
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P1
 - **Role:** capture-codec
 - **Owner:** opencode-a1
@@ -205,11 +210,17 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/capture-codec/T-0103
 - **Acceptance:**
   - Decode encoder output to BGRA/YUV; roundtrip test on fake content
+- **Review:** accepted 2026-11-19 by opencode-a2 — keyframe and 5-frame in-order
+  roundtrips pass with mean RGB error 2.44/255 (budget 12.0). Output format is **RGBA8**,
+  not BGRA/YUV: OpenH264 only exposes `write_rgb8`/`write_rgba8` and the viewer's texture
+  upload wants RGBA, so the acceptance wording is satisfied by intent, not literally.
+  Noted risk: `decode()` returns `Unavailable` when an access unit yields no frame, so
+  the loopback stage must tolerate it before P2 (Fake/DXGI paths currently always yield).
 - **Notes / links:** output is RGBA8, not BGRA — see docs/HANDOFF.md 2026-11-18
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0104 · Loopback pipeline thread + channels
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P1
 - **Role:** architect
 - **Owner:** opencode-a1
@@ -218,8 +229,13 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/architect/T-0104
 - **Acceptance:**
   - Dedicated threads + crossbeam caps 1–2; drop-oldest demonstrated under overload test
+- **Review:** accepted 2026-11-19 by opencode-a2 — four named OS threads, `queue_cap`
+  validated to 1–2, and `latest_channel_evicts_oldest_and_never_blocks` overloads a cap-1
+  and cap-2 channel with 100 items and asserts the newest survive. Real run recorded
+  (30 frames, zero drops, per-stage sums) in HANDOFF. Known limits accepted for P1: the
+  "present" stage is a dimension check until T-0105, and dropped frames have no timing.
 - **Notes / links:** docs/01_ARCHITECTURE.md §2; implements in tools/loopback
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0105 · egui present decoded texture
 - **Status:** TODO
@@ -261,7 +277,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0108 · P1 dependency unblock + ADR-0007
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P1
 - **Role:** architect
 - **Owner:** opencode-a1
@@ -273,10 +289,15 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
   - ADR-0007 records the openh264 binding/licensing decision and the C-toolchain prerequisite
   - `tools/loopback` workspace member stub added (T-0104 placement decided)
   - `fmt` / `clippy -D warnings` / `test` green on Windows
+- **Review:** accepted 2026-11-19 by opencode-a2 — all three deps pinned and consumed
+  (`openh264` → vd-codec, `eframe`/`egui` → vd-viewer, `windows` → vd-capture behind
+  `cfg(windows)`); ADR-0007 covers binding, toolchain and licence/P9 risk; loopback is a
+  member and builds. DoD re-verified on this checkout. T-0107 added D3D11 features
+  crate-locally, so the workspace pins stayed untouched.
 - **Notes / links:** docs/adr/0007-openh264-sw-codec.md, docs/12_DEV_SETUP.md
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 ### T-0201 · Transport trait integration tests w/ netsim
-- **Status:** REVIEW
+- **Status:** DONE
 - **Phase:** P2
 - **Role:** network-transport
 - **Owner:** opencode-a1
@@ -285,8 +306,14 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Branch:** agent/network-transport/T-0201
 - **Acceptance:**
   - In-memory `Transport` adapter over SimLink; send/recv test
+- **Review:** accepted 2026-11-19 by opencode-a2 — 7 integration tests: all 10 channels
+  round-trip in order, bidirectional independence, 49 ms vs 50 ms latency deferral, total
+  loss, close semantics with `Error::Io`, malformed/empty frames as `Error::Protocol`
+  without panics. Placement in `tests/` + `vd-netsim` as dev-dependency keeps the product
+  graph legal per architecture §3; the duplicate channel-tag table is a documented
+  maintenance hazard for T-0205.
 - **Notes / links:** docs/adr/0002-transport-quic-over-udp.md
-- **Updated:** 2026-11-18 by opencode-a1
+- **Updated:** 2026-11-19 by opencode-a2 (reviewer)
 
 ### T-0202 · Quinn connect/accept wrapper
 - **Status:** TODO
