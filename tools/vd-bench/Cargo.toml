@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 vd-common = { workspace = true }
-vd-netsim = { workspace = true }
+vd-loopback = { path = "../loopback" }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }

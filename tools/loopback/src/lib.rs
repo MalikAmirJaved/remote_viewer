@@ -125,7 +125,7 @@ impl StageTimings {
 }
 
 /// Counters from one pipeline run.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct RunStats {
     /// Frames produced by capture.
     pub frames_captured: u64,
@@ -147,6 +147,12 @@ pub struct RunStats {
     pub max_frame_total_us: u64,
     /// Index of the last presented frame (proves ordering/identity).
     pub last_presented_index: Option<u64>,
+    /// Per-frame stage timings for presented frames, in presentation order.
+    ///
+    /// Percentile reporting (`tools/vd-bench`, T-0106) needs the individual samples;
+    /// sums alone cannot produce a p50. Bounded by `PipelineConfig::frames`, so memory
+    /// stays trivial (32 bytes per frame).
+    pub samples: Vec<StageTimings>,
 }
 
 impl RunStats {
@@ -277,6 +283,7 @@ struct PresentOutcome {
     last_index: Option<u64>,
     timings: StageTimings,
     max_frame_total_us: u64,
+    samples: Vec<StageTimings>,
 }
 
 fn dur_us(d: Duration) -> u64 {
@@ -438,6 +445,7 @@ pub fn run(cfg: PipelineConfig) -> Result<RunStats> {
                     present: present_us,
                 };
                 outcome.timings.accumulate(timings);
+                outcome.samples.push(timings);
                 outcome.max_frame_total_us = outcome.max_frame_total_us.max(timings.total_us());
                 outcome.presented += 1;
                 outcome.last_index = Some(item.index);
@@ -467,6 +475,7 @@ pub fn run(cfg: PipelineConfig) -> Result<RunStats> {
         timings: outcome.timings,
         max_frame_total_us: outcome.max_frame_total_us,
         last_presented_index: outcome.last_index,
+        samples: outcome.samples,
     })
 }
 
@@ -561,5 +570,6 @@ mod tests {
         );
         assert!(stats.timings.total_us() >= stats.max_frame_total_us);
         assert_eq!(stats.mean_frame_total_us(), stats.timings.total_us() / 12);
+        assert_eq!(stats.samples.len(), 12, "one sample per presented frame");
     }
 }

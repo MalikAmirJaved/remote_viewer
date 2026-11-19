@@ -2467,7 +2467,7 @@ dependencies = [
  "clap",
  "tracing",
  "vd-common",
- "vd-netsim",
+ "vd-loopback",
 ]
 
 [[package]]
