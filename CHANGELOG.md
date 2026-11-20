@@ -32,6 +32,8 @@ releases begin.
   payloads with a 1150 B soft cap and drop-oldest send buffering
 - Video reassembly: `vd-net::reassemble` completes frames from fragments and drops
   incomplete older frames when a newer one finishes (latest-frame-wins)
+- Token-bucket pacer: `vd-net::pacer` enforces a target bitrate with a ~50 ms burst
+  and an injectable monotonic clock for tests
 - Video packetisation: `vd-net::video` splits an encoded frame into 1150 B
   `VideoFrameFragment`s with validated metadata and exact `frag_total`
 - P2 groundwork: in-memory `Transport` adapter over `vd-netsim` with contract tests

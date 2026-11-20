@@ -30,7 +30,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | REVIEW | cursor-grok | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
 | T-0206 | Video reassembler latest-frame-wins | P2 | REVIEW | cursor-grok | T-0205 |
-| T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
+| T-0207 | Token-bucket pacer | P2 | REVIEW | cursor-grok | T-0204 |
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
 | T-0209 | SendInput keyboard/mouse MVP | P2 | REVIEW | opencode-a2 | T-0006 |
 | T-0210 | InputMove coalesce ≤125 Hz | P2 | REVIEW | opencode-a2 | T-0204,T-0209 |
@@ -514,17 +514,28 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0207 · Token-bucket pacer
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0204
 - **Touches:** crates/vd-net/**
 - **Branch:** agent/network-transport/T-0207
 - **Acceptance:**
   - Pacer enforces target bps in unit test within tolerance
-- **Notes / links:** docs/03_NETWORK_ADAPTATION.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Implementation:** `vd_net::pacer::Pacer` (re-exported as `vd_net::Pacer`) replaces
+  the always-allow stub. Token bucket filled at `bitrate_bps`, burst capacity default
+  `max(bitrate/8 * 50ms, 1150)` (`DEFAULT_BURST_MS`). `allow(size, now_us)` refills from
+  an injected monotonic clock then spends; `wait_us` reports delay without mutating.
+  `set_bitrate` retargets from `vd-rate`. Zero bitrate/burst/capacity → `InvalidArgument`.
+- **Verified:** unit test sends 500 B packets for 200 ms at 800 kbps and asserts bytes
+  sent within ±10% of ideal (`RATE_TEST_TOLERANCE`); plus burst-then-block, set_bitrate,
+  wait_us, and zero-bitrate rejection. `cargo test -p vd-net` + clippy `-D warnings`
+  green.
+- **Known limits:** not yet wired into agent send loop / `DatagramIo` (T-0208). No
+  per-channel buckets — one pacer is for video fragments.
+- **Notes / links:** docs/03_NETWORK_ADAPTATION.md §6
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0208 · Agent↔viewer LAN demo binary flags
 - **Status:** TODO

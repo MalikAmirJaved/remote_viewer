@@ -1,4 +1,4 @@
-//! Network transport: trait, QUIC (quinn), reliable streams, datagrams, hole-punch, relay, pacer.
+//! Network transport: trait, QUIC (quinn), reliable streams, datagrams, pacer, hole-punch, relay.
 //!
 //! Hot paths stay sync; tokio is used only around accept/connect orchestration in apps.
 #![forbid(unsafe_code)]
@@ -8,10 +8,13 @@ use vd_common::{Error, Result};
 use vd_proto::Channel;
 
 pub mod datagram;
+pub mod pacer;
 pub mod quic;
 pub mod reassemble;
 pub mod streams;
 pub mod video;
+
+pub use pacer::Pacer;
 
 /// Destination / path selection hint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -65,27 +68,6 @@ impl Transport for StubTransport {
 
     fn close(&mut self) -> Result<()> {
         Ok(())
-    }
-}
-
-/// Token-bucket pacer stub (real impl in later tasks).
-#[derive(Debug, Clone)]
-pub struct Pacer {
-    /// Target bitrate bps.
-    pub bitrate_bps: u32,
-}
-
-impl Pacer {
-    /// Create a pacer with a target bitrate.
-    #[must_use]
-    pub fn new(bitrate_bps: u32) -> Self {
-        Self { bitrate_bps }
-    }
-
-    /// Returns whether a packet of `size` bytes may be sent now (stub: always true).
-    #[must_use]
-    pub fn allow(&mut self, _size: usize) -> bool {
-        true
     }
 }
 

@@ -441,4 +441,27 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   test searches seeds 1..63 for a seed that drops ≥1 of 3 fragments at 50% —
   deterministic, but do not assume seed `1` alone always loses.
 
+## 2026-11-20 07:30 · cursor-grok · role: network-transport · T-0207
+- Did: replaced the always-allow `Pacer` stub with `vd_net::pacer::Pacer` — token
+  bucket at `bitrate_bps`, default burst `max(rate×50ms, 1150 B)`. `allow(size,
+  now_us)` / `wait_us` take an injected monotonic clock. `set_bitrate` retargets.
+  Re-exported as `vd_net::Pacer`.
+- State: rate unit test at 800 kbps over 200 ms stays within ±10% of ideal bytes.
+  Burst-then-block, set_bitrate, wait_us, zero-bitrate rejection covered. Task
+  REVIEW; `crates/vd-net/**` lock released. Branch `agent/network-transport/T-0207`.
+- Decisions: `Pacer::new` now returns `Result` (zero bitrate is invalid) — breaking
+  vs the old infallible stub, which nothing outside the crate called. Time is
+  caller-supplied so tests never sleep.
+- **Knobs:**
+  - `bitrate_bps` — fill rate; updated via `set_bitrate` from `vd-rate` later.
+  - `DEFAULT_BURST_MS = 50` — burst window used by `new` / `set_bitrate`.
+  - `RATE_TEST_TOLERANCE = 0.10` — acceptance band for the rate unit test.
+  - Capacity floor = `DEFAULT_MAX_FRAGMENT_DATA` (1150) so one fragment always fits
+    an idle bucket.
+- Next: **T-0208** LAN demo (architect role; depends on T-0203 + T-0206 + T-0104).
+  Wire `Pacer` + `DatagramIo` into agent send there. Review backlog is the gate.
+- Gotchas: initial bucket is full (burst). Drain or use a small capacity in tests that
+  measure steady-state rate. `allow(0, _)` always succeeds. Clock going backwards
+  skips refill.
+
 

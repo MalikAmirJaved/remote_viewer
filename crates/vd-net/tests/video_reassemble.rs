@@ -11,9 +11,7 @@ use vd_net::reassemble::FrameReassembler;
 use vd_net::video::{fragment_frame, EncodedFrameRef, FragmentConfig};
 use vd_net::{SendMode, Transport};
 use vd_netsim::LinkConfig;
-use vd_proto::{
-    Channel, Envelope, Payload, VideoFrameFragment, PROTOCOL_VERSION,
-};
+use vd_proto::{Channel, Envelope, Payload, VideoFrameFragment, PROTOCOL_VERSION};
 
 use common::SimPair;
 
@@ -72,8 +70,11 @@ fn fragment_then_reassemble_round_trip() {
 #[test]
 fn netsim_delivers_out_of_order_fragments_that_still_complete() {
     let data = b"abcdefghijklmnopqrstuvwxyz0123456789".repeat(40); // multi-fragment
-    let frags =
-        fragment_frame(sample_frame(1, &data), FragmentConfig::with_max_data_len(32)).expect("frag");
+    let frags = fragment_frame(
+        sample_frame(1, &data),
+        FragmentConfig::with_max_data_len(32),
+    )
+    .expect("frag");
     assert!(frags.len() > 2);
 
     let mut pair = SimPair::new(
@@ -89,7 +90,11 @@ fn netsim_delivers_out_of_order_fragments_that_still_complete() {
 
     for (i, frag) in frags.iter().enumerate() {
         pair.a
-            .send(Channel::Video, SendMode::Datagram, encode_frag(frag, i as u64))
+            .send(
+                Channel::Video,
+                SendMode::Datagram,
+                encode_frag(frag, i as u64),
+            )
             .expect("send");
     }
     pair.advance_ms(50);
@@ -207,7 +212,11 @@ fn netsim_total_loss_on_old_frame_still_allows_newer() {
     let old = fragment_frame(sample_frame(1, b"gone"), FragmentConfig::default()).expect("old");
     for (i, frag) in old.iter().enumerate() {
         pair.a
-            .send(Channel::Video, SendMode::Datagram, encode_frag(frag, i as u64))
+            .send(
+                Channel::Video,
+                SendMode::Datagram,
+                encode_frag(frag, i as u64),
+            )
             .expect("send");
     }
     pair.advance_ms(10);
