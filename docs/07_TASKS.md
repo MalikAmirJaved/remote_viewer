@@ -44,7 +44,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0308 | Capabilities negotiation | P3 | TODO | unassigned | T-0306 |
 | T-0309 | End-to-end internet path test doc | P3 | TODO | unassigned | T-0304,T-0306 |
 | T-0401 | ReceiverReport emit ~20 Hz | P4 | TODO | unassigned | T-0204 |
-| T-0402 | Delay-gradient + loss estimator | P4 | TODO | unassigned | T-0005 |
+| T-0402 | Delay-gradient + loss estimator | P4 | REVIEW | cursor-grok | T-0005 |
 | T-0403 | Drive encoder from RateDecision | P4 | TODO | unassigned | T-0402,T-0102 |
 | T-0404 | NACK small gaps | P4 | TODO | unassigned | T-0206 |
 | T-0405 | On-demand IDR on need_idr / ladder change | P4 | TODO | unassigned | T-0403 |
@@ -737,17 +737,17 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0402 · Delay-gradient + loss estimator
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P4
 - **Role:** rate-control
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0005
 - **Touches:** crates/vd-rate/**
 - **Branch:** agent/rate-control/T-0402
 - **Acceptance:**
   - Estimator unit tests with synthetic traces; replaces skeleton thresholds partially
-- **Notes / links:** docs/agents/role-rate-control.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Notes / links:** docs/agents/role-rate-control.md · docs/03_NETWORK_ADAPTATION.md §3
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0403 · Drive encoder from RateDecision
 - **Status:** TODO

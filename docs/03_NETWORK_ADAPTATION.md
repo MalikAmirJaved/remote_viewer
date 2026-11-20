@@ -22,7 +22,10 @@ must keep these rules. Targets are *(initial, to be validated)* — see
   `recv_bps`, `loss_ppm`, `jitter_us`, `owd_gradient`, `decode_ms`, `last_frame_id`, `need_idr`.
 - Agent runs a GCC/BBR-like estimator → target bitrate → drives **encoder bitrate,
   resolution scale, fps cap, and QP** together.
-- Skeleton state machine + quality ladder ship in P0; estimator filled in P4.
+- `vd-rate`: quality ladder + `NetworkEstimator` (OWD trendline gradient in µs/s +
+  EWMA `loss_ppm` → `BandwidthUsage`). Controller downshifts on `Overuse` or high
+  loss; upshifts slowly when clear. Raw OWD samples via `DelayGradientEstimator::push`
+  for synthetic traces; `ReceiverReport.owd_gradient` is interpreted as µs/s.
 
 ## 4. Quality ladder
 

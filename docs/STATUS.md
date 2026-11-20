@@ -1,14 +1,15 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-20 by cursor-grok (security-crypto, T-0305)
+**Updated:** 2026-11-20 by cursor-grok (rate-control, T-0402)
 
 ## Current phase
 
 **P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW.**
 **P2 in progress**: T-0201 DONE. In REVIEW: T-0202…T-0208 (LAN stack through demo CLI),
 T-0209/T-0210 (input). P2 implementation on the board is complete pending reviews.
-**P3 started**: `T-0305` Noise XX handshake is in REVIEW. Next unblocked: `T-0306`
-password challenge (deps T-0305), or clearing the review backlog.
+**P3 started**: `T-0305` Noise XX handshake is in REVIEW.
+**P4 started**: `T-0402` delay-gradient + loss estimator is in REVIEW. Next unblocked:
+`T-0306` (after T-0305 DONE) or `T-0403` (after T-0402 DONE).
 `apps/vd-signal/**` stays locked for T-0301 until 2026-11-20 10:42 UTC.
 
 ## Task completion by phase
@@ -29,7 +30,7 @@ password challenge (deps T-0305), or clearing the review backlog.
 ## Active locks
 
 `apps/vd-signal/**` — T-0301, opencode-a2, until 2026-11-20 10:42 UTC. See
-[agents/LOCKS.md](agents/LOCKS.md). (`crates/vd-crypto/**` lock for T-0305 released.)
+[agents/LOCKS.md](agents/LOCKS.md). (`vd-crypto` T-0305 and `vd-rate` T-0402 locks released.)
 
 ## Last HANDOFF headlines
 
@@ -60,6 +61,8 @@ password challenge (deps T-0305), or clearing the review backlog.
     without signal server
 14. `2026-11-20 · cursor-grok · security-crypto · T-0305` — Noise XX via snow;
     shared-key encrypt round-trip + tamper negative tests
+15. `2026-11-20 · cursor-grok · rate-control · T-0402` — delay-gradient + loss
+    estimator; controller uses BandwidthUsage overuse signal
 
 ## Open questions
 

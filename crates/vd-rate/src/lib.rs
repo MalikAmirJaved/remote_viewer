@@ -1,12 +1,17 @@
-//! Closed-loop rate control: quality ladder + estimator skeleton (pure logic, no IO).
+//! Closed-loop rate control: quality ladder + delay-gradient / loss estimator.
 //!
-//! See [`docs/03_NETWORK_ADAPTATION.md`](../../docs/03_NETWORK_ADAPTATION.md).
+//! Pure logic, no IO. See [`docs/03_NETWORK_ADAPTATION.md`](../../docs/03_NETWORK_ADAPTATION.md).
 #![forbid(unsafe_code)]
 
 mod controller;
+mod estimator;
 mod ladder;
 
 pub use controller::{RateController, RateControllerConfig, RateDecision, ReceiverStats};
+pub use estimator::{
+    BandwidthUsage, DelayGradientConfig, DelayGradientEstimator, LossEstimator,
+    LossEstimatorConfig, NetworkEstimate, NetworkEstimator,
+};
 pub use ladder::{QualityLadder, QualityLevel, QualityMode};
 
 /// Trait for pluggable rate controllers (agent-side).

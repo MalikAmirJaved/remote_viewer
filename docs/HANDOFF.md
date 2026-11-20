@@ -506,3 +506,19 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   transport. Or clear P1/P2 REVIEW backlog. Wire Noise over QUIC app data later.
 - Gotchas: first XX message has no authentication tag — do not use msg1-only tamper
   as a negative test. Secrets redacted in `DeviceKeyPair` Debug.
+
+## 2026-11-20 12:00 · cursor-grok · role: rate-control · T-0402
+- Did: `vd_rate::estimator` — `DelayGradientEstimator` (OWD OLS trendline → µs/s
+  gradient + overuse hysteresis), `LossEstimator` (EWMA ppm), `NetworkEstimator`
+  combining both. `RateController` now downs on `BandwidthUsage::Overuse` or high
+  instant loss (removed raw `down_owd_gradient` threshold). Synthetic-trace unit tests
+  for flat/rising/falling OWD, loss spike, congestion combo; controller overuse downshift.
+- State: 9 tests green; `clippy -D warnings` clean. Task REVIEW; `crates/vd-rate/**`
+  lock released. Branch `agent/rate-control/T-0402`.
+- Decisions: `ReceiverStats.owd_gradient` documented as µs/s. Ladder loss uses instant
+  report ppm; FEC uses smoothed EWMA. Default overuse_count=2.
+- **Knobs:** `DelayGradientConfig` window/deadband/overuse_count/underuse_count;
+  `LossEstimatorConfig.alpha_ppt` (default 200).
+- Next: reviewer → **T-0403** drive encoder from RateDecision, or **T-0406** FEC.
+- Gotchas: single strong gradient report needs `overuse_count: 1` (or two reports) to
+  flip usage; non-monotonic `t_ms` is ignored.

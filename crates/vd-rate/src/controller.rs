@@ -1,5 +1,6 @@
-//! Rate controller state machine skeleton.
+//! Rate controller state machine with delay-gradient / loss estimator.
 
+use crate::estimator::{BandwidthUsage, NetworkEstimate, NetworkEstimator};
 use crate::ladder::{QualityLadder, QualityLevel, QualityMode};
 use crate::RateControl;
 use vd_common::Error;
@@ -13,7 +14,7 @@ pub struct ReceiverStats {
     pub loss_ppm: u32,
     /// Jitter µs.
     pub jitter_us: u32,
-    /// One-way delay gradient (signed).
+    /// One-way delay gradient in **µs per second** (positive ⇒ delay rising).
     pub owd_gradient: i32,
     /// Decode time ms.
     pub decode_ms: u16,
@@ -40,13 +41,11 @@ pub struct RateDecision {
     pub fec_percent: u8,
 }
 
-/// Tunables for the skeleton controller.
+/// Tunables for the controller.
 #[derive(Debug, Clone)]
 pub struct RateControllerConfig {
     /// Loss ppm above which we step down immediately.
     pub down_loss_ppm: u32,
-    /// OWD gradient above which we treat path as congested.
-    pub down_owd_gradient: i32,
     /// Minimum ms between up-shifts (slow up).
     pub up_hold_ms: u64,
     /// Minimum ms between down-shifts (fast down still respects this small floor).
@@ -61,7 +60,6 @@ impl Default for RateControllerConfig {
     fn default() -> Self {
         Self {
             down_loss_ppm: 20_000, // 2 %
-            down_owd_gradient: 5,
             up_hold_ms: 2_500,
             down_hold_ms: 100,
             up_loss_ppm: 5_000, // 0.5 %
@@ -70,11 +68,12 @@ impl Default for RateControllerConfig {
     }
 }
 
-/// Pure state-machine rate controller (GCC/BBR-like estimator comes in later tasks).
+/// Pure state-machine rate controller driven by [`NetworkEstimator`].
 #[derive(Debug, Clone)]
 pub struct RateController {
     ladder: QualityLadder,
     cfg: RateControllerConfig,
+    estimator: NetworkEstimator,
     index: usize,
     last_change_ms: u64,
 }
@@ -86,9 +85,32 @@ impl RateController {
         Self {
             ladder,
             cfg,
+            estimator: NetworkEstimator::default(),
             index: 0,
             last_change_ms: 0,
         }
+    }
+
+    /// Create with a custom estimator (for tests / tuning).
+    #[must_use]
+    pub fn with_estimator(
+        ladder: QualityLadder,
+        cfg: RateControllerConfig,
+        estimator: NetworkEstimator,
+    ) -> Self {
+        Self {
+            ladder,
+            cfg,
+            estimator,
+            index: 0,
+            last_change_ms: 0,
+        }
+    }
+
+    /// Latest network estimate after the last stats ingest.
+    #[must_use]
+    pub fn last_estimate(&self) -> NetworkEstimate {
+        self.estimator.estimate()
     }
 
     /// Current decision without updating state.
@@ -111,33 +133,32 @@ impl RateController {
         let pct = loss_ppm / 2_500; // 10_000 ppm = 4%
         u8::try_from(pct.min(40)).unwrap_or(40)
     }
-}
 
-impl RateControl for RateController {
-    fn on_receiver_stats(&mut self, stats: &ReceiverStats) -> RateDecision {
-        let congested = stats.loss_ppm >= self.cfg.down_loss_ppm
-            || stats.owd_gradient >= self.cfg.down_owd_gradient;
-        let clear = stats.loss_ppm <= self.cfg.up_loss_ppm
-            && stats.owd_gradient < self.cfg.down_owd_gradient;
+    fn decide(&mut self, est: NetworkEstimate, now_ms: u64, need_idr: bool) -> RateDecision {
+        // Partial replacement of raw OWD threshold: use estimator usage + smoothed loss.
+        let congested =
+            matches!(est.usage, BandwidthUsage::Overuse) || est.loss_ppm >= self.cfg.down_loss_ppm;
+        let clear =
+            !matches!(est.usage, BandwidthUsage::Overuse) && est.loss_ppm <= self.cfg.up_loss_ppm;
 
-        let mut force_idr = stats.need_idr;
-        let elapsed = stats.now_ms.saturating_sub(self.last_change_ms);
+        let mut force_idr = need_idr;
+        let elapsed = now_ms.saturating_sub(self.last_change_ms);
 
         if congested && elapsed >= self.cfg.down_hold_ms {
             let next = (self.index + 1).min(self.ladder.len().saturating_sub(1));
             if next != self.index {
                 self.index = next;
-                self.last_change_ms = stats.now_ms;
+                self.last_change_ms = now_ms;
                 force_idr = true; // resolution/fps change → IDR
             }
         } else if clear && elapsed >= self.cfg.up_hold_ms && self.index > 0 {
             self.index -= 1;
-            self.last_change_ms = stats.now_ms;
+            self.last_change_ms = now_ms;
             force_idr = true;
         }
 
         let level = *self.ladder.get(self.index).expect("index in range");
-        // Mode currently recorded for future rung selection bias; skeleton keeps ladder order.
+        // Mode currently recorded for future rung selection bias; keep ladder order.
         let _ = self.cfg.mode;
 
         RateDecision {
@@ -145,8 +166,23 @@ impl RateControl for RateController {
             level_index: self.index,
             target_bps: level.target_bps,
             force_idr,
-            fec_percent: Self::fec_for_loss(stats.loss_ppm),
+            fec_percent: Self::fec_for_loss(est.loss_ppm),
         }
+    }
+}
+
+impl RateControl for RateController {
+    fn on_receiver_stats(&mut self, stats: &ReceiverStats) -> RateDecision {
+        let est = self
+            .estimator
+            .observe_report(stats.owd_gradient, stats.loss_ppm);
+        // Ladder thresholds use the report's instant loss (stable hysteresis);
+        // smoothed loss drives FEC. Gradient path uses estimator `usage`.
+        let mut for_ladder = est;
+        for_ladder.loss_ppm = stats.loss_ppm;
+        let mut decision = self.decide(for_ladder, stats.now_ms, stats.need_idr);
+        decision.fec_percent = Self::fec_for_loss(est.loss_ppm);
+        decision
     }
 
     fn level_index(&self) -> usize {
@@ -157,6 +193,7 @@ impl RateControl for RateController {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::estimator::{DelayGradientConfig, LossEstimatorConfig};
 
     fn stats(loss_ppm: u32, owd: i32, now_ms: u64) -> ReceiverStats {
         ReceiverStats {
@@ -207,5 +244,29 @@ mod tests {
         let idx_before = c.level_index();
         let d_late = c.on_receiver_stats(&stats(0, 0, 100 + 2_500));
         assert_eq!(d_late.level_index, idx_before - 1, "slow up after hold");
+    }
+
+    #[test]
+    fn downs_on_sustained_overuse_gradient() {
+        // overuse_count=1 so a single strong gradient report triggers Overuse.
+        let est = NetworkEstimator::new(
+            DelayGradientConfig {
+                overuse_count: 1,
+                underuse_count: 1,
+                deadband_us_per_s: 1_000,
+                ..DelayGradientConfig::default()
+            },
+            LossEstimatorConfig::default(),
+        );
+        let mut c = RateController::with_estimator(
+            QualityLadder::standard(),
+            RateControllerConfig::default(),
+            est,
+        );
+        // 50_000 µs/s rising delay, no loss — old skeleton needed raw threshold;
+        // estimator usage drives the downshift.
+        let d = c.on_receiver_stats(&stats(0, 50_000, 200));
+        assert!(d.level_index >= 1, "expected downshift on overuse gradient");
+        assert_eq!(c.last_estimate().usage, BandwidthUsage::Overuse);
     }
 }
