@@ -1,8 +1,9 @@
 //! QUIC endpoint setup on top of `quinn` (T-0202).
 //!
 //! Scope: bind → accept (host) and pinned-certificate connect (viewer), with an
-//! explicit idle timeout. Logical channel mapping is [T-0203]/[T-0204]; this module
-//! deliberately stops at a working connection plus raw bidirectional streams.
+//! explicit idle timeout. Control and Input mapping is [`crate::streams`] ([T-0203]);
+//! datagrams are [T-0204]. This module stops at a working connection plus raw
+//! bidirectional streams.
 //!
 //! # TLS posture (dev)
 //!
@@ -304,7 +305,9 @@ impl QuicConnection {
         self.inner.close_reason().map(|e| e.to_string())
     }
 
-    /// Open a bidirectional stream (Control/Input mapping is T-0203).
+    /// Open one raw bidirectional stream.
+    ///
+    /// Prefer [`crate::streams::ReliableChannels`] for Control and Input.
     ///
     /// # Errors
     /// Connection closed or stream limits exhausted.

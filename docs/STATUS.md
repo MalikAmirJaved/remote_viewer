@@ -1,13 +1,16 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-19 by opencode-a2 (network-transport)
+**Updated:** 2026-11-20 by cursor-grok (network-transport)
 
 ## Current phase
 
 **P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW** (T-0105
 viewer window, T-0106 latency report, T-0107 DXGI capturer). No P1 work is unimplemented.
-**P2 started**: T-0201 DONE; T-0202 (QUIC connect/accept) and T-0205 (video fragmenter)
-in REVIEW.
+**P2 in progress**: T-0201 DONE. In REVIEW: T-0202 (QUIC connect/accept), T-0203
+(Control/Input streams), T-0205 (video fragmenter), T-0209 (SendInput), T-0210
+(InputMove coalesce). Next implementation on the LAN path is T-0204 (datagrams),
+then T-0206 (reassembler). `apps/vd-signal/**` stays locked for T-0301 until
+2026-11-20 10:42 UTC.
 
 ## Task completion by phase
 
@@ -26,7 +29,8 @@ in REVIEW.
 
 ## Active locks
 
-None — see [agents/LOCKS.md](agents/LOCKS.md).
+`apps/vd-signal/**` — T-0301, opencode-a2, until 2026-11-20 10:42 UTC. See
+[agents/LOCKS.md](agents/LOCKS.md).
 
 ## Last HANDOFF headlines
 
@@ -45,6 +49,8 @@ None — see [agents/LOCKS.md](agents/LOCKS.md).
    with pinned dev cert; two-process loopback ping/pong, idle timeout configurable
 8. `2026-11-19 · opencode-a2 · network-transport · T-0205` — video fragmenter: encoded
    frame → 1150 B `VideoFrameFragment`s, validated, tested against a real `EncodedFrame`
+9. `2026-11-20 · cursor-grok · network-transport · T-0203` — Control and Input on
+   separate QUIC streams; Input send priority 2, Control 1
 
 ## Open questions
 
@@ -52,8 +58,11 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- None for code. Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202 / T-0205**
-  (P2).
+- Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202 / T-0203 / T-0205 /
+  T-0209 / T-0210** (P2), plus **T-0301** (P3).
+- `cargo clippy --workspace --all-targets -D warnings` fails in `vd-input` (T-0209/T-0210):
+  `MoveCoalescer::feed` is public while `DesktopBounds` and `HostInput` are `pub(crate)`,
+  plus unused items and `must_use` on a unit `reset`. `vd-net` itself is clean.
 - Accepted P1 limits (see HANDOFF 2026-11-19): DXGI rotated outputs and the hardware
   cursor are not captured; one `Vec<u8>` allocation per captured frame until the P5
   buffer pool / GPU path; the viewer converts RGBA→`ColorImage` and re-uploads the full

@@ -26,7 +26,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0108 | P1 dependency unblock + ADR-0007 | P1 | DONE | opencode-a1 | T-0006 |
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | REVIEW | opencode-a2 | T-0201 |
-| T-0203 | Reliable streams mapping for Control/Input | P2 | TODO | unassigned | T-0202 |
+| T-0203 | Reliable streams mapping for Control/Input | P2 | REVIEW | cursor-grok | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
 | T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
@@ -382,17 +382,39 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0203 · Reliable streams mapping for Control/Input
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0202
 - **Touches:** crates/vd-net/**
 - **Branch:** agent/network-transport/T-0203
 - **Acceptance:**
   - Control + Input on separate streams; Input marked high priority if API allows
-- **Notes / links:** docs/02_PROTOCOL.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Implementation:** `vd_net::streams::ReliableChannels` — the viewer calls `open` and
+  the host calls `accept`. Two bidirectional QUIC streams, tagged with `Channel as u8`
+  (`Control = 0`, `Input = 1`) so accept order does not matter. After the tag, each
+  direction is a sequence of `u32be` length-prefixed opaque payloads, capped at
+  `MAX_RELIABLE_PAYLOAD` (64 KiB). Quinn `SendStream::set_priority`: Input =
+  `INPUT_STREAM_PRIORITY` (2), Control = `CONTROL_STREAM_PRIORITY` (1). Both are above
+  `0`, reserved for later bulk reliable streams (clipboard, file, chat). Each side sets
+  priority on its own send half. Unknown tags and duplicates are reset with application
+  code 1 and returned as `Error::Protocol`. `Video` / `Feedback` and other non-reliable
+  channels are `InvalidArgument`.
+- **Verified:** 5 integration tests over real UDP loopback — bidirectional round-trip
+  with an empty Control payload and both ends reporting Input priority above Control;
+  oversized payload and non-reliable channels rejected, with a following Input message
+  still delivered; unknown tag rejected; duplicate Control tag rejected; a declared
+  frame length above the cap rejected without allocating it. `cargo clippy -p vd-net
+  --all-targets -- -D warnings` clean.
+- **Known limits:** payloads are opaque bytes, not postcard envelopes (apps wrap
+  `Envelope` themselves; `vd-proto` was not touched). `recv` allocates one `Vec<u8>`
+  per message. Datagrams (Video, InputMove, Feedback, Audio) are T-0204. Stream
+  priority does not by itself keep Input ahead of video; that split is "video on
+  datagrams", which this task does not send. T-0202 is still `REVIEW`; this builds on
+  the released `vd_net::quic` API.
+- **Notes / links:** docs/02_PROTOCOL.md; docs/adr/0002-transport-quic-over-udp.md
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0204 · Datagram send/recv for Video/Feedback
 - **Status:** TODO

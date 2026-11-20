@@ -343,4 +343,46 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   for now, but a per-frame buffer pool belongs with the P5 buffer work. 1150 B is the data
   budget; keep serialized envelope overhead inside the remaining ~50 B of the 1200 B MTU.
 
+## 2026-11-20 06:15 · cursor-grok · role: network-transport · T-0203
+- Did: `vd_net::streams::ReliableChannels` — viewer `open`s two bidirectional QUIC
+  streams, host `accept`s them. First byte is `Channel as u8` (Control 0, Input 1) so
+  accept order does not matter. After that, each direction is `u32be` length + opaque
+  bytes, capped at 64 KiB. Quinn `set_priority` on each side's send half: Input 2,
+  Control 1, both above 0 (reserved for later clipboard/file/chat streams). Unknown
+  and duplicate tags are reset with application code 1. 5 loopback integration tests.
+- State: Control and Input round-trip on separate streams, including an empty Control
+  payload, and both ends report Input priority above Control. Oversized sends,
+  Video/Feedback, a bad tag, a duplicate Control tag, and a declared length above the
+  cap all fail cleanly. `cargo test -p vd-net --all-targets` green (the new tests plus
+  the existing quic/video/sim suites). `cargo clippy -p vd-net --all-targets -D warnings`
+  clean. Task is REVIEW; `crates/vd-net/**` lock released. Did not mark T-0202 DONE.
+- Decisions: payloads stay opaque. Postcard `Envelope` encoding belongs to the app
+  (or a later task); `vd-proto` was not edited. The viewer opens and the host accepts,
+  which matches "client initiates streams". Priority is per send direction — quinn
+  does not copy it to the peer, so `accept` sets it again on the host's send half.
+- **Knobs:**
+  - `CONTROL_STREAM_PRIORITY = 1`, `INPUT_STREAM_PRIORITY = 2`. Higher is scheduled
+    first. Leave `0` for bulk reliable streams.
+  - `MAX_RELIABLE_PAYLOAD = 64 KiB`. Larger local sends are `InvalidArgument`; a peer
+    that declares a longer frame gets `Protocol` and nothing is allocated for it.
+  - Stream tag is the `Channel` discriminant. Only 0 and 1 are accepted here.
+  - Bad-tag reset code is `1` (`BAD_STREAM_TAG`).
+- Next: T-0204 (Video/Feedback/InputMove/Audio datagrams) on `crates/vd-net/**`, then
+  T-0206 reassembler on the T-0205 fragment list. T-0302 is the checked-out branch
+  this session started from, but `apps/vd-signal/**` is still locked for T-0301 until
+  2026-11-20 10:42 UTC and T-0301 is REVIEW, so that path was left alone. This branch
+  `agent/network-transport/T-0203` was cut from that tip because `main` is still the
+  init commit and does not contain the QUIC wrapper.
+- Gotchas: `accept` waits until both tags arrive; a peer that opens only one stream
+  stalls it (the caller can timeout). Dropping `QuicServer` drops the endpoint, so a
+  test that still needs to read must keep the server task alive until the read
+  finishes. `recv` allocates one `Vec` per message — fine for input, not a pattern to
+  copy onto the video path. Stream priority does not keep Input ahead of video;
+  video has to stay on datagrams (T-0204) for that.
+  `cargo clippy --workspace --all-targets -D warnings` is already red on this tip
+  because of `vd-input` (T-0209/T-0210): `MoveCoalescer::feed` is public but
+  `DesktopBounds` and `HostInput` are `pub(crate)`, plus dead-code and
+  `must_use_unit`. That crate is outside this task's `Touches`. `vd-net` itself is
+  clean.
+
 
