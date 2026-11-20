@@ -28,6 +28,8 @@ releases begin.
   certificate, configurable idle timeout and ALPN `vd/1` (`quinn`)
 - Reliable Control and Input streams: `vd-net::streams` opens one QUIC stream per
   channel, tags them, and schedules Input at a higher send priority than Control
+- Unreliable datagrams: `vd-net::datagram` sends tagged Video/Feedback/InputMove/Audio
+  payloads with a 1150 B soft cap and drop-oldest send buffering
 - Video packetisation: `vd-net::video` splits an encoded frame into 1150 B
   `VideoFrameFragment`s with validated metadata and exact `frag_total`
 - P2 groundwork: in-memory `Transport` adapter over `vd-netsim` with contract tests

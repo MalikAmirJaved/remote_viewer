@@ -385,4 +385,36 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   `must_use_unit`. That crate is outside this task's `Touches`. `vd-net` itself is
   clean.
 
+## 2026-11-20 07:20 · cursor-grok · role: network-transport · T-0204
+- Did: `vd_net::datagram::DatagramIo` — tagged QUIC datagrams for InputMove / Video /
+  Audio / Feedback (`Channel as u8` + opaque payload). Soft cap 1150 B aligned with
+  the fragmenter; live cap also respects `max_datagram_size() - 1`. Sync `send` via
+  `send_datagram` (drop-oldest); async `recv`. Extended `QuicConfig` with
+  `datagram_send_buffer_size` / `datagram_receive_buffer_size` (1 MiB defaults).
+  Updated existing `quic_connect` tests that constructed `QuicConfig` by field.
+- State: Video + Feedback + empty InputMove round-trip on loopback. Oversized and
+  Control sends rejected without breaking a follow-up Feedback. Raw Control-tagged
+  datagram rejected on recv. Zero send-buffer config rejected at bind. Task REVIEW;
+  `crates/vd-net/**` lock released. Branch `agent/network-transport/T-0204` (includes
+  uncommitted T-0203 work on the same tip).
+- Decisions: one soft cap for all datagram channels (not per-channel). Prefer
+  `send_datagram` over `send_datagram_wait` so congestion drops old video instead of
+  HOL-blocking on the send buffer. Did not wire into the abstract `Transport` trait
+  yet — apps can use `DatagramIo` directly alongside `ReliableChannels`.
+- **Knobs:**
+  - `DEFAULT_MAX_DATAGRAM_PAYLOAD = 1150` (must stay equal to fragment data budget).
+  - `QuicConfig.datagram_send_buffer_size` default `DEFAULT_DATAGRAM_SEND_BUFFER` =
+    1 MiB; must be non-zero.
+  - `QuicConfig.datagram_receive_buffer_size` default `DEFAULT_DATAGRAM_RECV_BUFFER` =
+    1 MiB; `0` disables incoming datagrams (`None` to quinn).
+  - Channel tags: InputMove=2, Video=3, Audio=5, Feedback=6.
+- Next: **T-0206** video reassembler (latest-frame-wins) on the T-0205 fragment list,
+  then T-0207 pacer consuming `DatagramIo::send`. T-0210 coalesce already exists in
+  `vd-input` but still needs review + a clippy fix.
+- Gotchas: `max_payload()` can be `None` briefly if the peer has not finished
+  negotiating datagram support — treat as `Unavailable`, not a soft size error.
+  Empty payloads are valid (used by the InputMove empty-payload test). A datagram
+  with only a tag and no payload is fine; a completely empty datagram (no tag) is
+  `Protocol`.
+
 

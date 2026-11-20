@@ -1,4 +1,4 @@
-//! Network transport: trait, QUIC (quinn), reliable Control/Input streams, hole-punch, relay, pacer.
+//! Network transport: trait, QUIC (quinn), reliable streams, datagrams, hole-punch, relay, pacer.
 //!
 //! Hot paths stay sync; tokio is used only around accept/connect orchestration in apps.
 #![forbid(unsafe_code)]
@@ -7,6 +7,7 @@ use bytes::Bytes;
 use vd_common::{Error, Result};
 use vd_proto::Channel;
 
+pub mod datagram;
 pub mod quic;
 pub mod streams;
 pub mod video;

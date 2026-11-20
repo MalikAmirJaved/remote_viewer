@@ -27,7 +27,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0201 | Transport trait integration tests w/ netsim | P2 | DONE | opencode-a1 | T-0004 |
 | T-0202 | Quinn connect/accept wrapper | P2 | REVIEW | opencode-a2 | T-0201 |
 | T-0203 | Reliable streams mapping for Control/Input | P2 | REVIEW | cursor-grok | T-0202 |
-| T-0204 | Datagram send/recv for Video/Feedback | P2 | TODO | unassigned | T-0202 |
+| T-0204 | Datagram send/recv for Video/Feedback | P2 | REVIEW | cursor-grok | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
 | T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
@@ -417,17 +417,35 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0204 · Datagram send/recv for Video/Feedback
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0202
 - **Touches:** crates/vd-net/**
 - **Branch:** agent/network-transport/T-0204
 - **Acceptance:**
   - Datagram path works; oversized payloads rejected cleanly
-- **Notes / links:** —
-- **Updated:** 2026-11-17 by cursor-init
+- **Implementation:** `vd_net::datagram::DatagramIo` — wraps a `QuicConnection` and
+  multiplexes `InputMove` / `Video` / `Audio` / `Feedback` as one-byte-tagged QUIC
+  datagrams (`Channel as u8` + opaque payload). Soft cap
+  `DEFAULT_MAX_DATAGRAM_PAYLOAD` = 1150 B (same as the video fragment data budget);
+  live cap is `min(1150, max_datagram_size() - 1)`. `send` is sync and uses
+  `Connection::send_datagram` (drop-oldest under congestion). `recv` is async.
+  Reliable channels are `InvalidArgument`. Unknown tags are `Protocol`.
+  `QuicConfig` now also sets `datagram_send_buffer_size` /
+  `datagram_receive_buffer_size` (default 1 MiB each; send buffer of 0 rejected;
+  recv buffer of 0 disables incoming datagrams).
+- **Verified:** 5 integration tests over UDP loopback — Video + Feedback + empty
+  InputMove round-trip; Control and >1150 B Video rejected; oversized reject leaves a
+  following Feedback send working; raw Control-tagged datagram rejected on recv;
+  zero send-buffer config rejected. 3 unit tests for channel tagging. `cargo test -p
+  vd-net --all-targets` and `clippy -p vd-net --all-targets -D warnings` green.
+- **Known limits:** payloads are opaque (no postcard). Coalesce for InputMove is
+  T-0210 (already REVIEW in `vd-input`). Pacing is T-0207. Reassembly is T-0206.
+  Datagrams are not yet wired into the abstract `Transport` trait.
+- **Notes / links:** docs/02_PROTOCOL.md; docs/adr/0002-transport-quic-over-udp.md
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0205 · Video fragmenter (~1150 B)
 - **Status:** REVIEW

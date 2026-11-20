@@ -1,16 +1,16 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-20 by cursor-grok (network-transport)
+**Updated:** 2026-11-20 by cursor-grok (network-transport, T-0204)
 
 ## Current phase
 
 **P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW** (T-0105
 viewer window, T-0106 latency report, T-0107 DXGI capturer). No P1 work is unimplemented.
-**P2 in progress**: T-0201 DONE. In REVIEW: T-0202 (QUIC connect/accept), T-0203
-(Control/Input streams), T-0205 (video fragmenter), T-0209 (SendInput), T-0210
-(InputMove coalesce). Next implementation on the LAN path is T-0204 (datagrams),
-then T-0206 (reassembler). `apps/vd-signal/**` stays locked for T-0301 until
-2026-11-20 10:42 UTC.
+**P2 in progress**: T-0201 DONE. In REVIEW: T-0202 (QUIC), T-0203 (Control/Input
+streams), T-0204 (datagrams), T-0205 (fragmenter), T-0209 (SendInput), T-0210
+(InputMove coalesce). Next implementation on the LAN path is **T-0206**
+(reassembler), then T-0207 (pacer). `apps/vd-signal/**` stays locked for T-0301
+until 2026-11-20 10:42 UTC.
 
 ## Task completion by phase
 
@@ -51,6 +51,8 @@ then T-0206 (reassembler). `apps/vd-signal/**` stays locked for T-0301 until
    frame → 1150 B `VideoFrameFragment`s, validated, tested against a real `EncodedFrame`
 9. `2026-11-20 · cursor-grok · network-transport · T-0203` — Control and Input on
    separate QUIC streams; Input send priority 2, Control 1
+10. `2026-11-20 · cursor-grok · network-transport · T-0204` — tagged QUIC datagrams
+    for Video/Feedback/InputMove/Audio; 1150 B soft cap
 
 ## Open questions
 
@@ -58,8 +60,8 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202 / T-0203 / T-0205 /
-  T-0209 / T-0210** (P2), plus **T-0301** (P3).
+- Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202 / T-0203 / T-0204 /
+  T-0205 / T-0209 / T-0210** (P2), plus **T-0301** (P3).
 - `cargo clippy --workspace --all-targets -D warnings` fails in `vd-input` (T-0209/T-0210):
   `MoveCoalescer::feed` is public while `DesktopBounds` and `HostInput` are `pub(crate)`,
   plus unused items and `must_use` on a unit `reset`. `vd-net` itself is clean.

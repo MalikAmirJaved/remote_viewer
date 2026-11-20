@@ -105,6 +105,7 @@ async fn unknown_server_name_is_rejected() {
 async fn idle_timeout_is_configurable_and_zero_is_rejected() {
     let cfg = QuicConfig {
         idle_timeout: Duration::from_millis(2500),
+        ..QuicConfig::default()
     };
     let server = QuicServer::bind_with(loopback(), cfg).expect("bind server");
     assert_eq!(server.idle_timeout(), Duration::from_millis(2500));
@@ -114,6 +115,7 @@ async fn idle_timeout_is_configurable_and_zero_is_rejected() {
             loopback(),
             QuicConfig {
                 idle_timeout: Duration::ZERO,
+                ..QuicConfig::default()
             }
         ),
         Err(Error::InvalidArgument(_))
@@ -126,6 +128,7 @@ async fn idle_timeout_is_configurable_and_zero_is_rejected() {
             server.cert_der(),
             QuicConfig {
                 idle_timeout: Duration::ZERO,
+                ..QuicConfig::default()
             }
         )
         .await,
@@ -137,6 +140,7 @@ async fn idle_timeout_is_configurable_and_zero_is_rejected() {
 async fn idle_connection_is_closed_after_the_configured_timeout() {
     let cfg = QuicConfig {
         idle_timeout: Duration::from_millis(300),
+        ..QuicConfig::default()
     };
     let server = QuicServer::bind_with(loopback(), cfg).expect("bind server");
     let addr = server.local_addr();

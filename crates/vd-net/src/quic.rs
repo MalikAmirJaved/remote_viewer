@@ -45,12 +45,19 @@ pub const DEFAULT_IDLE_TIMEOUT: Duration = Duration::from_secs(10);
 pub struct QuicConfig {
     /// Close the connection after this much time without traffic from the peer.
     pub idle_timeout: Duration,
+    /// Quinn outgoing datagram buffer (bytes). Older unsent datagrams are dropped when
+    /// full — that is the latest-frame-wins behaviour for video under congestion.
+    pub datagram_send_buffer_size: usize,
+    /// Quinn incoming datagram buffer (bytes). `0` disables receiving datagrams.
+    pub datagram_receive_buffer_size: usize,
 }
 
 impl Default for QuicConfig {
     fn default() -> Self {
         Self {
             idle_timeout: DEFAULT_IDLE_TIMEOUT,
+            datagram_send_buffer_size: crate::datagram::DEFAULT_DATAGRAM_SEND_BUFFER,
+            datagram_receive_buffer_size: crate::datagram::DEFAULT_DATAGRAM_RECV_BUFFER,
         }
     }
 }
@@ -60,6 +67,11 @@ impl QuicConfig {
         if self.idle_timeout.is_zero() {
             return Err(Error::InvalidArgument(
                 "quic: idle_timeout must be non-zero".into(),
+            ));
+        }
+        if self.datagram_send_buffer_size == 0 {
+            return Err(Error::InvalidArgument(
+                "quic: datagram_send_buffer_size must be non-zero".into(),
             ));
         }
         Ok(())
@@ -75,6 +87,13 @@ impl QuicConfig {
         })?;
         let mut transport = TransportConfig::default();
         transport.max_idle_timeout(Some(idle));
+        transport.datagram_send_buffer_size(self.datagram_send_buffer_size);
+        let recv = if self.datagram_receive_buffer_size == 0 {
+            None
+        } else {
+            Some(self.datagram_receive_buffer_size)
+        };
+        transport.datagram_receive_buffer_size(recv);
         Ok(Arc::new(transport))
     }
 }
@@ -329,7 +348,8 @@ impl QuicConnection {
             .map_err(|e| Error::Io(format!("quic: accept bidirectional stream: {e}")))
     }
 
-    /// Escape hatch for T-0203/T-0204 (datagrams, stream prioritisation).
+    /// Escape hatch for advanced quinn features. Prefer
+    /// [`crate::streams::ReliableChannels`] and [`crate::datagram::DatagramIo`].
     #[must_use]
     pub fn inner(&self) -> &Connection {
         &self.inner
