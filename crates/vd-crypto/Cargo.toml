@@ -12,6 +12,8 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 zeroize = { workspace = true }
 serde = { workspace = true }
+# Noise_XX_25519_ChaChaPoly_BLAKE2s (ADR-0004).
+snow = { workspace = true }
 
 [lints]
 workspace = true

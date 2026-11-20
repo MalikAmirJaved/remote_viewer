@@ -38,7 +38,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0302 | Signal: session notify + candidates WS | P3 | TODO | unassigned | T-0301 |
 | T-0303 | Hole punch from shared UDP socket | P3 | TODO | unassigned | T-0202 |
 | T-0304 | Relay forward opaque packets | P3 | TODO | unassigned | T-0302 |
-| T-0305 | Noise XX handshake | P3 | TODO | unassigned | T-0006 |
+| T-0305 | Noise XX handshake | P3 | REVIEW | cursor-grok | T-0006 |
 | T-0306 | Password challenge-response | P3 | TODO | unassigned | T-0305 |
 | T-0307 | Consent UI + session indicator (host) | P3 | TODO | unassigned | T-0302 |
 | T-0308 | Capabilities negotiation | P3 | TODO | unassigned | T-0306 |
@@ -659,17 +659,17 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-17 by cursor-init
 
 ### T-0305 · Noise XX handshake
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P3
 - **Role:** security-crypto
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0006
 - **Touches:** crates/vd-crypto/**
 - **Branch:** agent/security-crypto/T-0305
 - **Acceptance:**
   - Initiator/responder produce shared keys; negative test bad handshake
 - **Notes / links:** docs/adr/0004-e2e-crypto-noise.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0306 · Password challenge-response
 - **Status:** TODO

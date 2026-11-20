@@ -16,8 +16,10 @@
 ## E2E encryption
 
 - Noise `Noise_XX_25519_ChaChaPoly_BLAKE2s` ([ADR-0004](adr/0004-e2e-crypto-noise.md)).
+- Crate API (`vd-crypto`): `NoiseHandshake` / `NoiseTransport` over `snow`; device
+  static keys via `DeviceKeyPair` + `KeyStore` (in-memory for tests; platform stores later).
 - Signal/relay never hold session keys.
-- Replay protection via handshake ephemeral + session nonces (detail in P3 implementation).
+- Replay protection via handshake ephemeral + session nonces (Noise transport nonces).
 
 ## Authentication
 

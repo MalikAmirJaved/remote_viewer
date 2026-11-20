@@ -489,3 +489,20 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   clippy is still red independently.
 
 
+
+## 2026-11-20 08:50 · cursor-grok · role: security-crypto · T-0305
+- Did: Replaced the Noise XX stub with real `snow` `Noise_XX_25519_ChaChaPoly_BLAKE2s`.
+  `DeviceKeyPair::generate` / `from_secret`; `MemoryKeyStore` creates real keys;
+  `NoiseHandshake` (initiator/responder write/read) → `NoiseTransport` encrypt/decrypt;
+  peer static exposed for TOFU. Password challenge stays `NotImplemented` (T-0306).
+- State: 5 unit tests green (shared-key round-trip, tampered msg2, foreign-session decrypt,
+  keystore pin/reuse, bad secret len). `clippy -D warnings` + `fmt` clean for
+  `vd-crypto`. Task REVIEW; `crates/vd-crypto/**` lock released. Branch
+  `agent/security-crypto/T-0305`.
+- Decisions: prove shared keys via AEAD round-trip (no `risky-raw-split`). Negative
+  test tampers MAC'd handshake message 2 (msg1 is bare `e` and has no MAC).
+- **Knobs:** pattern string `NOISE_PATTERN`; max message 65535 (Noise limit).
+- Next: reviewer accepts T-0305 → **T-0306** Argon2id password challenge inside
+  transport. Or clear P1/P2 REVIEW backlog. Wire Noise over QUIC app data later.
+- Gotchas: first XX message has no authentication tag — do not use msg1-only tamper
+  as a negative test. Secrets redacted in `DeviceKeyPair` Debug.

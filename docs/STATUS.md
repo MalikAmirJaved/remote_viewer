@@ -1,13 +1,14 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-20 by cursor-grok (architect, T-0208)
+**Updated:** 2026-11-20 by cursor-grok (security-crypto, T-0305)
 
 ## Current phase
 
 **P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW.**
 **P2 in progress**: T-0201 DONE. In REVIEW: T-0202…T-0208 (LAN stack through demo CLI),
 T-0209/T-0210 (input). P2 implementation on the board is complete pending reviews.
-Next unblocked work is mostly P3 (`T-0305` Noise) or clearing the review backlog.
+**P3 started**: `T-0305` Noise XX handshake is in REVIEW. Next unblocked: `T-0306`
+password challenge (deps T-0305), or clearing the review backlog.
 `apps/vd-signal/**` stays locked for T-0301 until 2026-11-20 10:42 UTC.
 
 ## Task completion by phase
@@ -28,7 +29,7 @@ Next unblocked work is mostly P3 (`T-0305` Noise) or clearing the review backlog
 ## Active locks
 
 `apps/vd-signal/**` — T-0301, opencode-a2, until 2026-11-20 10:42 UTC. See
-[agents/LOCKS.md](agents/LOCKS.md).
+[agents/LOCKS.md](agents/LOCKS.md). (`crates/vd-crypto/**` lock for T-0305 released.)
 
 ## Last HANDOFF headlines
 
@@ -57,6 +58,8 @@ Next unblocked work is mostly P3 (`T-0305` Noise) or clearing the review backlog
     enforces target bps (±10% in unit test)
 13. `2026-11-20 · cursor-grok · architect · T-0208` — LAN demo CLI agent↔viewer
     without signal server
+14. `2026-11-20 · cursor-grok · security-crypto · T-0305` — Noise XX via snow;
+    shared-key encrypt round-trip + tamper negative tests
 
 ## Open questions
 
