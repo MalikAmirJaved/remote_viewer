@@ -148,7 +148,16 @@ fn encode_loop(cfg: LanHostConfig, dgrams: DatagramIo, stop: watch::Receiver<boo
     let mut pacer = Pacer::new(cfg.bitrate_bps).context("create pacer")?;
     let clock = MonotonicClock::new();
     let mut frame_id = 0u64;
-    let frag_cfg = FragmentConfig::default();
+    // DatagramIo caps the *postcard* payload at ≤1150 B. Fragment *data* must leave
+    // room for VideoFrameFragment metadata (frame_id, codec, dims, …) or send fails
+    // and the peer eventually sees a QUIC idle timeout.
+    const POSTCARD_META_RESERVE: usize = 64;
+    let dg_cap = dgrams
+        .max_payload()
+        .context("datagrams not negotiated with peer")?;
+    let data_cap = dg_cap.saturating_sub(POSTCARD_META_RESERVE).max(1);
+    let frag_cfg = FragmentConfig::with_max_data_len(data_cap);
+    tracing::info!(dg_cap, data_cap, "lan fragment sizing");
 
     while !*stop.borrow() {
         let Some(captured) = capturer.capture_frame().context("capture")? else {

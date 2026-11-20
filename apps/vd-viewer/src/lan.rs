@@ -191,7 +191,22 @@ async fn async_lan(
         let Ok(outcome) = recv.await else {
             continue;
         };
-        let (channel, payload) = outcome.map_err(|e| Error::Io(format!("lan datagram: {e}")))?;
+        let (channel, payload) = match outcome {
+            Ok(v) => v,
+            Err(e) => {
+                let msg = e.to_string();
+                // Quinn reports idle / peer-gone as "timed out". Surface a clearer reason:
+                // usually the host exited (e.g. send failed) rather than a poll timeout.
+                if msg.contains("timed out") || msg.contains("timeout") {
+                    return Err(Error::Io(
+                        "lan: connection timed out — host stopped sending or exited \
+                         (check the agent terminal for send/encode errors)"
+                            .into(),
+                    ));
+                }
+                return Err(Error::Io(format!("lan datagram: {e}")));
+            }
+        };
         if channel != Channel::Video {
             continue;
         }

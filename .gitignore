@@ -52,3 +52,9 @@ perf.data*
 # Logs
 *.log
 logs/
+
+# LAN demo local artifacts (T-0208) — regenerated at runtime, never commit
+vd-agent-cert.der
+*.der
+agent-out.txt
+agent-err.txt
