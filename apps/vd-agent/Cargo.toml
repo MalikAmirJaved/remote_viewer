@@ -16,12 +16,11 @@ vd-proto = { workspace = true }
 vd-capture = { workspace = true }
 vd-codec = { workspace = true }
 vd-net = { workspace = true }
-vd-input = { workspace = true }
-vd-rate = { workspace = true }
-vd-crypto = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
+postcard = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "time", "sync"] }
 
 [lints]
 workspace = true

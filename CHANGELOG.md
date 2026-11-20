@@ -34,6 +34,8 @@ releases begin.
   incomplete older frames when a newer one finishes (latest-frame-wins)
 - Token-bucket pacer: `vd-net::pacer` enforces a target bitrate with a ~50 ms burst
   and an injectable monotonic clock for tests
+- LAN demo CLI: `vd-agent --listen` / `vd-viewer --connect` stream fake desktop video
+  over QUIC without a signal server (documented in `docs/12_DEV_SETUP.md`)
 - Video packetisation: `vd-net::video` splits an encoded frame into 1150 B
   `VideoFrameFragment`s with validated metadata and exact `frag_total`
 - P2 groundwork: in-memory `Transport` adapter over `vd-netsim` with contract tests

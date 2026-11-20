@@ -464,4 +464,28 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   measure steady-state rate. `allow(0, _)` always succeeds. Clock going backwards
   skips refill.
 
+## 2026-11-20 08:00 · cursor-grok · role: architect · T-0208
+- Did: LAN demo without signal. `vd-agent --listen` / `--cert-out` binds QUIC, writes
+  pinned DER, accepts Control/Input, streams fake→H.264→fragment→pacer→Video
+  datagrams; visible session banner + Ctrl+C end. `vd-viewer --connect` / `--cert`
+  opens streams, reassembles, decodes off-UI, presents in egui. Documented in
+  `docs/12_DEV_SETUP.md`. Dropped unused `vd-input`/`vd-rate`/`vd-crypto` from
+  `vd-agent` so the demo does not pull the broken `vd-input` clippy surface.
+- State: clippy `-D warnings` and unit tests green for both apps. Task REVIEW; app
+  locks released. Deps T-0203/T-0206 were still REVIEW when claimed (noted on the
+  task). Branch `agent/architect/T-0208`.
+- Decisions: fake capture for portability (DXGI swap is a follow-up). Postcard of
+  `VideoFrameFragment` as datagram payload (channel already tagged). Viewer keeps
+  loopback as default when `--connect` is absent.
+- **Knobs / CLI:**
+  - Agent: `--listen <SocketAddr>`, `--cert-out` (default `vd-agent-cert.der`),
+    `--width/--height/--fps/--bitrate`.
+  - Viewer: `--connect <SocketAddr>`, `--cert`, `--server-name` (default `localhost`).
+- Next: reviewer sweep (P1 + P2 REVIEW pile). Next implementation with DONE deps:
+  **T-0305** Noise XX, or **T-0402** rate estimator. Re-add input crates to the agent
+  when wiring SendInput over LAN.
+- Gotchas: cert file must be readable by the viewer process (copy across machines for
+  real LAN). Agent must be accepting before the viewer connects. `vd-input` workspace
+  clippy is still red independently.
+
 

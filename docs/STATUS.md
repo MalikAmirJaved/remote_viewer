@@ -1,15 +1,14 @@
 # Project status — remote_viewer
 
-**Updated:** 2026-11-20 by cursor-grok (network-transport, T-0207)
+**Updated:** 2026-11-20 by cursor-grok (architect, T-0208)
 
 ## Current phase
 
-**P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW** (T-0105
-viewer window, T-0106 latency report, T-0107 DXGI capturer). No P1 work is unimplemented.
-**P2 in progress**: T-0201 DONE. In REVIEW: T-0202…T-0207 (QUIC through pacer),
-T-0209/T-0210 (input). Next on the LAN path is **T-0208** (agent↔viewer demo flags)
-once T-0203 + T-0206 are accepted. `apps/vd-signal/**` stays locked for T-0301 until
-2026-11-20 10:42 UTC.
+**P1 Local pipeline — implementation complete; 5/8 DONE and 3 in REVIEW.**
+**P2 in progress**: T-0201 DONE. In REVIEW: T-0202…T-0208 (LAN stack through demo CLI),
+T-0209/T-0210 (input). P2 implementation on the board is complete pending reviews.
+Next unblocked work is mostly P3 (`T-0305` Noise) or clearing the review backlog.
+`apps/vd-signal/**` stays locked for T-0301 until 2026-11-20 10:42 UTC.
 
 ## Task completion by phase
 
@@ -56,6 +55,8 @@ once T-0203 + T-0206 are accepted. `apps/vd-signal/**` stays locked for T-0301 u
     video reassembler; netsim loss/reorder tests
 12. `2026-11-20 · cursor-grok · network-transport · T-0207` — token-bucket pacer
     enforces target bps (±10% in unit test)
+13. `2026-11-20 · cursor-grok · architect · T-0208` — LAN demo CLI agent↔viewer
+    without signal server
 
 ## Open questions
 
@@ -63,7 +64,7 @@ See [HANDOFF.md](HANDOFF.md) `## OPEN QUESTIONS`.
 
 ## Known blockers
 
-- Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202…T-0207 / T-0209 /
+- Reviews needed: **T-0105 / T-0106 / T-0107** (P1) and **T-0202…T-0208 / T-0209 /
   T-0210** (P2), plus **T-0301** (P3).
 - `cargo clippy --workspace --all-targets -D warnings` fails in `vd-input` (T-0209/T-0210):
   `MoveCoalescer::feed` is public while `DesktopBounds` and `HostInput` are `pub(crate)`,

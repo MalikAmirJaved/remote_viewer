@@ -51,6 +51,33 @@ cargo run -p vd-relay
 cargo run -p vd-bench -- --profile lan
 ```
 
+## LAN demo (no signal server) — T-0208
+
+Stream fake desktop video host → viewer over QUIC on the local network. Certificate
+pinning is out of band (the agent writes a DER file; the viewer pins it).
+
+**Terminal A — host**
+
+```bash
+cargo run -p vd-agent --release -- --listen 127.0.0.1:7856 --cert-out vd-agent-cert.der
+```
+
+The host prints a visible **LAN SESSION** banner and keeps it up until Ctrl+C.
+
+**Terminal B — viewer** (same machine or another host that can reach the agent and read
+the cert file)
+
+```bash
+cargo run -p vd-viewer --release -- --connect 127.0.0.1:7856 --cert vd-agent-cert.der
+```
+
+Notes:
+
+- Default video is **fake capture** (portable). DXGI desktop capture can replace it later.
+- `--server-name` defaults to `localhost` (must match a SAN on the agent cert).
+- Without `--connect`, `vd-viewer` still runs the in-process loopback window (P1).
+- Without `--listen`, `vd-agent` stays a stub and prints the LAN flag hint.
+
 ## Codec SDK notes
 
 | Backend | When | Notes |

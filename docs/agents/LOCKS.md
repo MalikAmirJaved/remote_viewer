@@ -6,6 +6,8 @@ Agents claim paths before editing. Expired locks may be taken after a HANDOFF no
 |-------|------|-------|---------------|---------------|
 | apps/vd-signal/** | T-0301 | opencode-a2 | 2026-11-19 10:42 | 2026-11-20 10:42 |
 
+*(T-0208 claimed 2026-11-20 07:42 on `apps/vd-agent/**` + `apps/vd-viewer/**` by cursor-grok; released 2026-11-20 08:00 after REVIEW.)*
+
 *(T-0207 claimed 2026-11-20 07:17 on `crates/vd-net/**` by cursor-grok; released 2026-11-20 07:30 after REVIEW.)*
 
 *(T-0206 claimed 2026-11-20 07:12 on `crates/vd-net/**` by cursor-grok; released 2026-11-20 07:25 after REVIEW.)*

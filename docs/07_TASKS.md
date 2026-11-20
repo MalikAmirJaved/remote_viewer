@@ -31,7 +31,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
 | T-0206 | Video reassembler latest-frame-wins | P2 | REVIEW | cursor-grok | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | REVIEW | cursor-grok | T-0204 |
-| T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
+| T-0208 | Agent↔viewer LAN demo binary flags | P2 | REVIEW | cursor-grok | T-0203,T-0206,T-0104 |
 | T-0209 | SendInput keyboard/mouse MVP | P2 | REVIEW | opencode-a2 | T-0006 |
 | T-0210 | InputMove coalesce ≤125 Hz | P2 | REVIEW | opencode-a2 | T-0204,T-0209 |
 | T-0301 | Signal: register peer ID (SQLite) | P3 | REVIEW | opencode-a2 | T-0008 |
@@ -538,17 +538,31 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0208 · Agent↔viewer LAN demo binary flags
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** architect
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0203, T-0206, T-0104
 - **Touches:** apps/vd-agent/**, apps/vd-viewer/**
 - **Branch:** agent/architect/T-0208
 - **Acceptance:**
   - Documented CLI to stream on LAN without signal server
+- **Implementation:** Direct QUIC LAN path (no signal). `vd-agent --listen <addr>
+  --cert-out <der>` binds, writes a pinned cert, accepts Control/Input streams, then
+  streams fake-capture → H.264 → fragment → pacer → Video datagrams. Console prints a
+  visible **LAN SESSION** banner (ethics: host can end with Ctrl+C). `vd-viewer
+  --connect <addr> --cert <der>` opens streams, reassembles, decodes off the UI thread,
+  and presents in egui. Without those flags the old stub/loopback behaviour remains.
+  Documented in `docs/12_DEV_SETUP.md` §LAN demo.
+- **Verified:** `cargo clippy -p vd-agent -p vd-viewer --all-targets -D warnings`
+  clean; `cargo test -p vd-agent -p vd-viewer` green (CLI help + existing loopback UI
+  tests). Manual two-process run is the acceptance path (documented).
+- **Known limits:** Fake capture only (not DXGI). No input injection over the LAN path
+  yet. T-0203/T-0206 were still REVIEW when this was claimed. Unused `vd-input` /
+  `vd-rate` / `vd-crypto` deps removed from `vd-agent` for this demo (re-add when
+  wiring input).
 - **Notes / links:** docs/12_DEV_SETUP.md
-- **Updated:** 2026-11-17 by cursor-init
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0209 · SendInput keyboard/mouse MVP
 - **Status:** REVIEW

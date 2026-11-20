@@ -1,75 +1,91 @@
-//! Viewer window: presents decoded frames from the in-process loopback pipeline.
+//! Viewer window: loopback (default) or direct LAN connect (T-0208).
 //!
-//! T-0105 scope: a real egui/eframe window that shows the fake desktop through
-//! capture → H.264 encode → H.264 decode, with start/stop controls and live counters.
-//! Network connect (peer ID / password) arrives in P2; `--peer` is accepted for CLI
-//! compatibility but does not connect yet.
-//!
-//! Decoding never runs on the UI thread: [`loopback::LoopbackSource`] owns a worker
-//! thread and the UI only drains the newest decoded frame (role rule, ADR-0006).
+//! Decoding never runs on the UI thread: a worker publishes decoded RGBA frames and
+//! the UI only drains the newest one (role rule, ADR-0006).
 
 #![forbid(unsafe_code)]
 
+mod lan;
 mod loopback;
+mod source;
 
+use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use clap::Parser;
 use eframe::egui;
-use loopback::{LoopbackConfig, LoopbackSource};
+use lan::LanClientConfig;
+use loopback::LoopbackConfig;
+use source::VideoSource;
 use vd_common::init_tracing;
 
 /// remote_viewer viewer client.
 #[derive(Debug, Parser)]
 #[command(name = "vd-viewer", about = "remote_viewer viewer")]
 struct Args {
-    /// Peer ID to connect to (not used until P2).
+    /// Peer ID to connect to (signal path — unused until P3).
     #[arg(long)]
     peer: Option<String>,
 
-    /// Loopback frame width in pixels (must be even).
+    /// Connect directly to a LAN host (`vd-agent --listen`). Skips loopback.
+    #[arg(long)]
+    connect: Option<SocketAddr>,
+
+    /// Pinned host certificate (DER) from `vd-agent --cert-out`.
+    #[arg(long, default_value = "vd-agent-cert.der")]
+    cert: PathBuf,
+
+    /// TLS server name on the host certificate (SAN).
+    #[arg(long, default_value = "localhost")]
+    server_name: String,
+
+    /// Loopback frame width in pixels (must be even). Ignored with `--connect`.
     #[arg(long, default_value_t = 960)]
     width: u32,
 
-    /// Loopback frame height in pixels (must be even).
+    /// Loopback frame height in pixels (must be even). Ignored with `--connect`.
     #[arg(long, default_value_t = 540)]
     height: u32,
 
-    /// Loopback frames per second.
+    /// Loopback frames per second. Ignored with `--connect`.
     #[arg(long, default_value_t = 30)]
     fps: u8,
 
-    /// Loopback encoder bitrate in bits per second.
+    /// Loopback encoder bitrate in bits per second. Ignored with `--connect`.
     #[arg(long, default_value_t = 2_500_000)]
     bitrate: u32,
 }
 
-/// Viewer application state: one in-process loopback source plus the presented texture.
+#[derive(Debug, Clone)]
+enum Mode {
+    Loopback(LoopbackConfig),
+    Lan(LanClientConfig),
+}
+
+/// Viewer application state.
 struct ViewerApp {
-    cfg: LoopbackConfig,
-    source: Option<LoopbackSource>,
+    mode: Mode,
+    /// Requested fps used only for UI repaint pacing.
+    ui_fps: u8,
+    source: Option<VideoSource>,
     texture: Option<egui::TextureHandle>,
-    /// Size of the image currently held by `texture`.
     texture_size: (u32, u32),
-    /// Frames handed to the GPU since start.
     presented: u64,
-    /// Frames the worker has published (cumulative).
     produced: u64,
-    /// Frames lost to latest-frame-wins (cumulative).
     dropped: u64,
-    /// Measured presentation rate over the last window.
     fps: f32,
     fps_mark: Instant,
     fps_count: u32,
-    /// Last worker or start failure, shown in the status bar.
     error: Option<String>,
 }
 
 impl ViewerApp {
-    fn new(cfg: LoopbackConfig) -> Self {
+    fn new(mode: Mode, ui_fps: u8) -> Self {
         let mut app = Self {
-            cfg,
+            mode,
+            ui_fps,
             source: None,
             texture: None,
             texture_size: (0, 0),
@@ -85,18 +101,19 @@ impl ViewerApp {
         app
     }
 
-    /// Start the loopback worker, replacing any previous one.
     fn start(&mut self) {
         self.stop();
         self.error = None;
-        match LoopbackSource::start(self.cfg) {
+        let started = match &self.mode {
+            Mode::Loopback(cfg) => VideoSource::start_loopback(*cfg),
+            Mode::Lan(cfg) => VideoSource::start_lan(cfg.clone()),
+        };
+        match started {
             Ok(source) => {
                 self.source = Some(source);
                 self.fps_mark = Instant::now();
                 self.fps_count = 0;
             }
-            // Startup failures are reported in the window rather than killing it: the
-            // user keeps the Start button and can fix the flags without a crash loop.
             Err(e) => self.error = Some(e.to_string()),
         }
     }
@@ -115,7 +132,6 @@ impl ViewerApp {
         self.start();
     }
 
-    /// Drain the newest decoded frame, upload it, and refresh the counters.
     fn drain(&mut self, ctx: &egui::Context) {
         let mut newest = None;
         if let Some(source) = &self.source {
@@ -126,7 +142,7 @@ impl ViewerApp {
                 self.error = source.last_error();
             }
             if self.error.is_none() && source.is_finished() {
-                self.error = Some("loopback worker stopped unexpectedly".into());
+                self.error = Some("video worker stopped unexpectedly".into());
             }
         }
 
@@ -144,7 +160,6 @@ impl ViewerApp {
         }
     }
 
-    /// Upload a decoded RGBA frame, reusing the texture unless its size changed.
     fn upload(&mut self, ctx: &egui::Context, frame: &vd_codec::DecodedFrame) {
         let image = egui::ColorImage::from_rgba_unmultiplied(
             [frame.width as usize, frame.height as usize],
@@ -155,11 +170,8 @@ impl ViewerApp {
                 texture.set(image, egui::TextureOptions::LINEAR);
             }
             _ => {
-                self.texture = Some(ctx.load_texture(
-                    "vd-viewer-loopback",
-                    image,
-                    egui::TextureOptions::LINEAR,
-                ));
+                self.texture =
+                    Some(ctx.load_texture("vd-viewer-video", image, egui::TextureOptions::LINEAR));
                 self.texture_size = (frame.width, frame.height);
             }
         }
@@ -182,33 +194,25 @@ impl ViewerApp {
     }
 
     fn controls(&mut self, ui: &mut egui::Ui) {
+        let mode_label = self
+            .source
+            .as_ref()
+            .map_or("stopped", VideoSource::mode_label);
         ui.horizontal(|ui| {
             ui.heading("remote_viewer");
             ui.separator();
             if self.source.is_some() {
-                if ui
-                    .button("Stop")
-                    .on_hover_text("Stop the loopback worker (also stops on window close)")
-                    .clicked()
-                {
+                if ui.button("Stop").clicked() {
                     self.stop();
                 }
-            } else if ui
-                .button("Start")
-                .on_hover_text("Start the loopback worker")
-                .clicked()
-            {
+            } else if ui.button("Start").clicked() {
                 self.start();
             }
-            if ui
-                .button("Restart")
-                .on_hover_text("Restart the loopback worker (F5)")
-                .clicked()
-            {
+            if ui.button("Restart").on_hover_text("F5").clicked() {
                 self.restart();
             }
             ui.separator();
-            ui.label("local loopback — network connect arrives in P2");
+            ui.label(mode_label);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label("Esc closes");
             });
@@ -217,10 +221,17 @@ impl ViewerApp {
 
     fn status(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            ui.label(format!(
-                "{}×{} @ {} fps requested",
-                self.cfg.width, self.cfg.height, self.cfg.fps
-            ));
+            match &self.mode {
+                Mode::Loopback(cfg) => {
+                    ui.label(format!(
+                        "{}×{} @ {} fps requested",
+                        cfg.width, cfg.height, cfg.fps
+                    ));
+                }
+                Mode::Lan(cfg) => {
+                    ui.label(format!("LAN {}", cfg.connect));
+                }
+            }
             ui.separator();
             ui.label(format!("presented {}", self.presented));
             ui.label(format!("pipeline {}", self.produced));
@@ -243,7 +254,6 @@ impl ViewerApp {
             return;
         };
 
-        // Fit the frame inside the panel while preserving its aspect ratio.
         let available = ui.available_size();
         let image = texture.size_vec2();
         let scale = (available.x / image.x).min(available.y / image.y).max(0.0);
@@ -268,10 +278,8 @@ impl eframe::App for ViewerApp {
         egui::Panel::bottom("status").show(ui, |ui| self.status(ui));
         egui::CentralPanel::default().show(ui, |ui| self.video(ui));
 
-        // Video arrives on its own thread; poll at half the source interval so the
-        // window follows it without busy-spinning when nothing is decoded.
         if self.source.is_some() {
-            let interval = Duration::from_secs_f32(0.5 / f32::from(self.cfg.fps));
+            let interval = Duration::from_secs_f32(0.5 / f32::from(self.ui_fps.max(1)));
             ctx.request_repaint_after(interval);
         }
     }
@@ -284,20 +292,30 @@ impl eframe::App for ViewerApp {
 fn main() -> Result<()> {
     init_tracing();
     let args = Args::parse();
-    let cfg = LoopbackConfig {
-        width: args.width,
-        height: args.height,
-        fps: args.fps,
-        bitrate_bps: args.bitrate,
+
+    let (mode, ui_fps) = if let Some(connect) = args.connect {
+        let lan = LanClientConfig {
+            connect,
+            cert: args.cert,
+            server_name: args.server_name,
+        };
+        lan.validate()?;
+        tracing::info!(%connect, cert = %lan.cert.display(), "vd-viewer LAN connect");
+        (Mode::Lan(lan), 30)
+    } else {
+        let cfg = LoopbackConfig {
+            width: args.width,
+            height: args.height,
+            fps: args.fps,
+            bitrate_bps: args.bitrate,
+        };
+        cfg.validate()?;
+        tracing::info!(
+            peer = args.peer.as_deref().unwrap_or("(none)"),
+            "vd-viewer loopback window (use --connect for LAN)"
+        );
+        (Mode::Loopback(cfg), args.fps)
     };
-    cfg.validate()?;
-    tracing::info!(
-        peer = args.peer.as_deref().unwrap_or("(none)"),
-        width = cfg.width,
-        height = cfg.height,
-        fps = cfg.fps,
-        "vd-viewer starting loopback window (network is P2)"
-    );
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -306,12 +324,10 @@ fn main() -> Result<()> {
             .with_min_inner_size([480.0, 320.0]),
         ..Default::default()
     };
-    // `eframe::Error` is not `Send + Sync` (it can carry glutin handles), so it cannot
-    // cross an `anyhow` boundary with `?`; flatten it to a message instead.
     eframe::run_native(
         "remote_viewer",
         options,
-        Box::new(move |_cc| Ok(Box::new(ViewerApp::new(cfg)))),
+        Box::new(move |_cc| Ok(Box::new(ViewerApp::new(mode, ui_fps)))),
     )
     .map_err(|e| anyhow::anyhow!("eframe: {e}"))?;
     Ok(())
@@ -320,6 +336,7 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::CommandFactory;
 
     fn small() -> LoopbackConfig {
         LoopbackConfig {
@@ -345,10 +362,17 @@ mod tests {
     }
 
     #[test]
+    fn cli_declares_connect_and_cert() {
+        let mut cmd = Args::command();
+        let help = cmd.render_long_help().to_string();
+        assert!(help.contains("--connect"));
+        assert!(help.contains("--cert"));
+    }
+
+    #[test]
     fn drains_decoded_frames_into_a_texture() {
-        // A headless Context is enough: texture upload only queues a delta.
         let ctx = egui::Context::default();
-        let mut app = ViewerApp::new(small());
+        let mut app = ViewerApp::new(Mode::Loopback(small()), 30);
         wait_for_frames(&mut app, &ctx, 3);
 
         let texture = app.texture.as_ref().expect("texture uploaded");
@@ -360,7 +384,7 @@ mod tests {
     #[test]
     fn restart_replaces_the_source_and_resets_counters() {
         let ctx = egui::Context::default();
-        let mut app = ViewerApp::new(small());
+        let mut app = ViewerApp::new(Mode::Loopback(small()), 30);
         wait_for_frames(&mut app, &ctx, 2);
 
         app.restart();
@@ -371,9 +395,7 @@ mod tests {
     }
 
     #[test]
-    fn invalid_config_is_reported_instead_of_panicking() {
-        // `new` starts the worker; a workable config is needed here, and the start
-        // failure path is exercised through the loopback config validation instead.
+    fn invalid_loopback_config_is_rejected() {
         let bad = LoopbackConfig {
             width: 65,
             ..small()
@@ -383,7 +405,7 @@ mod tests {
 
     #[test]
     fn stop_is_safe_when_never_started() {
-        let mut app = ViewerApp::new(small());
+        let mut app = ViewerApp::new(Mode::Loopback(small()), 30);
         app.stop();
         app.stop();
         assert!(app.source.is_none());
