@@ -417,4 +417,28 @@ Append-only. Newest entries at the **bottom**. Do not rewrite others' entries.
   with only a tag and no payload is fine; a completely empty datagram (no tag) is
   `Protocol`.
 
+## 2026-11-20 07:25 · cursor-grok · role: network-transport · T-0206
+- Did: `vd_net::reassemble::FrameReassembler` — ingest `VideoFrameFragment`s in any
+  order; on complete, return `AssembledFrame` and abandon every incomplete older
+  `frame_id`. Stale fragments (`frame_id ≤ last_completed`) and duplicate slots are
+  counted, not fatal. Metadata mismatches on an open frame are `InvalidArgument`.
+  Netsim integration tests cover reorder delivery, 50% loss then newer-wins, and
+  100% loss on an old frame.
+- State: fragment→reassemble round-trip matches bitstream. Completing frame 2 with
+  frame 1 still open abandons frame 1 (`stats.abandoned ≥ 1`). Task REVIEW;
+  `crates/vd-net/**` lock released. Branch `agent/network-transport/T-0206`.
+- Decisions: keep multiple in-progress frames until one completes (do not abandon
+  on first fragment of a newer id). First-seen dirty_rects wins; later ones ignored.
+  No idle timeout abandon yet — only latest-frame-wins on complete.
+- **Knobs:** none beyond the fragmenter cap; reassembler has no config struct.
+  Stats fields are the observability surface.
+- Next: **T-0207** token-bucket pacer (depends on T-0204, which is REVIEW). Then
+  T-0208 LAN demo once T-0203 + T-0206 are accepted. Review backlog is the main
+  gate for calling P2 "streamable".
+- Gotchas: `push` takes ownership of the fragment (and its `Vec` payload). A stuck
+  incomplete frame with no newer completion stays in `in_progress` forever — fine
+  for P2; add a timeout if a viewer sits idle after a lossy keyframe. Netsim loss
+  test searches seeds 1..63 for a seed that drops ≥1 of 3 fragments at 50% —
+  deterministic, but do not assume seed `1` alone always loses.
+
 

@@ -1,8 +1,9 @@
 //! Video packetisation: split one encoded frame into MTU-safe fragments (T-0205).
 //!
-//! The wire type is [`vd_proto::VideoFrameFragment`]; the matching reassembler is
-//! T-0206. Fragment payloads are capped at [`DEFAULT_MAX_FRAGMENT_DATA`] (1150 B) so that
-//! the serialized envelope still fits the 1200 B path MTU assumed by
+//! The wire type is [`vd_proto::VideoFrameFragment`]. Reassembly is
+//! [`crate::reassemble`] (T-0206). Fragment payloads are capped at
+//! [`DEFAULT_MAX_FRAGMENT_DATA`] (1150 B) so that the serialized envelope still fits the
+//! 1200 B path MTU assumed by
 //! [docs/03_NETWORK_ADAPTATION.md](../../../docs/03_NETWORK_ADAPTATION.md).
 //!
 //! # Why a borrowed view instead of `vd_codec::EncodedFrame`
@@ -17,7 +18,7 @@
 //! - Dirty rects: `vd_codec::EncodedFrame` does not carry them, so fragments are built
 //!   with `dirty_rects: None` until capture metadata is threaded through the encoder.
 //! - Pacing: fragments are produced immediately; the token-bucket pacer is T-0207.
-//! - Retransmission/NACK/FEC: receiver-driven, see T-0206/T-0402.
+//! - Retransmission/NACK/FEC: receiver-driven, see T-0404 / T-0406.
 
 use vd_common::{Error, Result};
 use vd_proto::VideoFrameFragment;

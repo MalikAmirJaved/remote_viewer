@@ -9,6 +9,7 @@ use vd_proto::Channel;
 
 pub mod datagram;
 pub mod quic;
+pub mod reassemble;
 pub mod streams;
 pub mod video;
 

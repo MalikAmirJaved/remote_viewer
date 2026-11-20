@@ -29,7 +29,7 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 | T-0203 | Reliable streams mapping for Control/Input | P2 | REVIEW | cursor-grok | T-0202 |
 | T-0204 | Datagram send/recv for Video/Feedback | P2 | REVIEW | cursor-grok | T-0202 |
 | T-0205 | Video fragmenter (~1150 B) | P2 | REVIEW | opencode-a2 | T-0003 |
-| T-0206 | Video reassembler latest-frame-wins | P2 | TODO | unassigned | T-0205 |
+| T-0206 | Video reassembler latest-frame-wins | P2 | REVIEW | cursor-grok | T-0205 |
 | T-0207 | Token-bucket pacer | P2 | TODO | unassigned | T-0204 |
 | T-0208 | Agent↔viewer LAN demo binary flags | P2 | TODO | unassigned | T-0203,T-0206,T-0104 |
 | T-0209 | SendInput keyboard/mouse MVP | P2 | REVIEW | opencode-a2 | T-0006 |
@@ -485,17 +485,33 @@ Authors never mark their own work `DONE` (reviewer does). Init session tasks bel
 - **Updated:** 2026-11-19 by opencode-a2
 
 ### T-0206 · Video reassembler latest-frame-wins
-- **Status:** TODO
+- **Status:** REVIEW
 - **Phase:** P2
 - **Role:** network-transport
-- **Owner:** unassigned
+- **Owner:** cursor-grok
 - **Depends on:** T-0205
 - **Touches:** crates/vd-net/**
 - **Branch:** agent/network-transport/T-0206
 - **Acceptance:**
   - Completes frames; drops incomplete older frames when newer completes; loss test via netsim
-- **Notes / links:** —
-- **Updated:** 2026-11-17 by cursor-init
+- **Implementation:** `vd_net::reassemble::FrameReassembler` — `push(VideoFrameFragment) →
+  Option<AssembledFrame>`. Fragments may arrive in any order; completing a `frame_id`
+  concatenates slots in `frag_idx` order and **abandons** every incomplete older
+  `frame_id`. Fragments with `frame_id ≤ last_completed` are counted as stale and
+  ignored. Duplicates keep the first payload. Metadata mismatches on an in-progress
+  frame are `InvalidArgument`. Stats: `completed` / `abandoned` / `stale_fragments` /
+  `duplicate_fragments`.
+- **Verified:** 5 module tests (out-of-order complete, newer abandons older, duplicates,
+  invalid inputs, metadata mismatch). 5 integration tests: fragment→reassemble round
+  trip; netsim reorder delivery still completes; netsim 50% loss leaves frame 1 open
+  then frame 2 wins; 100% loss on frame 1 still allows frame 2; envelope edge sanity.
+  `cargo test -p vd-net --all-targets` + `clippy -p vd-net --all-targets -D warnings`
+  green.
+- **Known limits:** no NACK/FEC (T-0404/T-0406). No timeout-based abandon of a stuck
+  in-progress frame until a newer one completes. Dirty rects taken from the first
+  fragment that carries them.
+- **Notes / links:** docs/02_PROTOCOL.md §VideoFrameFragment; docs/03_NETWORK_ADAPTATION.md §1
+- **Updated:** 2026-11-20 by cursor-grok
 
 ### T-0207 · Token-bucket pacer
 - **Status:** TODO
